@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
         <meta charset="utf-8" />
-        <title>挪威的森林 - ipython</title>
+        <title>How easy is it to use IPython notebooks with pelican?</title>
         <link rel="stylesheet" href="http://localhost:8000/theme/css/main.css" />
 </head>
 
@@ -14,13 +14,18 @@
                     <li><a href="http://localhost:8000/pages/tutorials.html">Tutorials</a></li>
                     <li><a href="http://localhost:8000/pages/vita.html">Vita</a></li>
                     <li><a href="http://localhost:8000/category/updates.html">updates</a></li>
-                    <li><a href="http://localhost:8000/category/walkthroughs.html">walkthroughs</a></li>
+                    <li class="active"><a href="http://localhost:8000/category/walkthroughs.html">walkthroughs</a></li>
                 </ul></nav>
         </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="http://localhost:8000/testing-ipython-integration.html" rel="bookmark"
+           title="Permalink to How easy is it to use IPython notebooks with pelican?">How easy is it to use IPython notebooks with pelican?</a></h1>
+    </header>
 
-            <aside id="featured" class="body">
-                <article>
-                    <h1 class="entry-title"><a href="http://localhost:8000/testing-ipython-integration.html">How easy is it to use IPython notebooks with pelican?</a></h1>
+    <div class="entry-content">
 <footer class="post-info">
         <abbr class="published" title="2014-03-31T20:33:00-07:00">
                 Published: 一 31 三月 2014
@@ -31,7 +36,7 @@
         </address>
 <p>In <a href="http://localhost:8000/category/walkthroughs.html">walkthroughs</a>.</p>
 <p>tags: <a href="http://localhost:8000/tag/pelican.html">pelican</a> <a href="http://localhost:8000/tag/ipython.html">ipython</a> <a href="http://localhost:8000/tag/notebook.html">notebook</a> </p>
-</footer><!-- /.post-info --><p><strong>UPDATE 8/26/2014</strong>:Thanks to <a href="http://github.com/DandyDev">Daan Debie</a>, you no longer have to do any of the below if you're using the pelican-bootstrap3 theme.  Simply include the <code>liquid-tags.notebook</code> plugin in your pelican plugin list and you're good to go!</p>
+</footer><!-- /.post-info -->      <p><strong>UPDATE 8/26/2014</strong>:Thanks to <a href="http://github.com/DandyDev">Daan Debie</a>, you no longer have to do any of the below if you're using the pelican-bootstrap3 theme.  Simply include the <code>liquid-tags.notebook</code> plugin in your pelican plugin list and you're good to go!</p>
 <hr>
 <p>In this post, I'm (selfishly) testing the integration between pelican and <code>IPython</code> notebooks.</p>
 <p>I've been meaning to do this for awhile, since I have quite a few <code>R</code> and <code>Python</code> tutorials on a variety of subjects written up as <code>IPython</code> notebooks, my distribution platform of choice.</p>
@@ -40,8 +45,11 @@
 <p>His hack does the job, and now the notebooks are more nicely styled than without the additional css, but it makes me feel a little leery since it has the feel of something that will break with an update.  Oh well; that's what you get when you use open-source projects.</p>
 <p>Below the line is an example of an ipython notebook embedded in a pelican article.  It's as simple as creating a notebook and referring to {% notebook demonstration.ipynb %} in the article post.</p>
 <hr>
-<p>{% notebook demonstration.ipynb %}</p>                </article>
-            </aside><!-- /#featured -->
+<p>{% notebook demonstration.ipynb %}</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
         <section id="extras" class="body">
         </section><!-- /#extras -->
 
