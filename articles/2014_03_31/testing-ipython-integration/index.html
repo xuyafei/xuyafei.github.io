@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
 <head>
-    <title>Very Applied Methods workshop - 挪威的森林</title>
+    <title>How easy is it to use IPython notebooks with pelican? - 挪威的森林</title>
     <!-- Using the latest rendering mode for IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
@@ -9,24 +9,23 @@
 
 
 
-<link rel="canonical" href="../../../articles/2014_04_25/vam-python/">
+<link rel="canonical" href="../../../articles/2014_03_31/testing-ipython-integration/">
 
-        <meta name="author" content="Rebecca Weiss" />
-        <meta name="keywords" content="pelican,publishing,workshops,python" />
-        <meta name="description" content="Intro to Python materials from the Very Applied Methods workshop" />
+        <meta name="author" content="Yafei Xu" />
+        <meta name="keywords" content="pelican,ipython,notebook" />
+        <meta name="description" content="Testing IPython notebook integration with pelican, pelican-bootstrap3, and liquid tags for IPython" />
 
         <meta property="og:site_name" content="挪威的森林" />
         <meta property="og:type" content="article"/>
-        <meta property="og:title" content="Very Applied Methods workshop"/>
-        <meta property="og:url" content="../../../articles/2014_04_25/vam-python/"/>
-        <meta property="og:description" content="Intro to Python materials from the Very Applied Methods workshop"/>
-        <meta property="article:published_time" content="2014-04-25" />
-            <meta property="article:section" content="thought" />
+        <meta property="og:title" content="How easy is it to use IPython notebooks with pelican?"/>
+        <meta property="og:url" content="../../../articles/2014_03_31/testing-ipython-integration/"/>
+        <meta property="og:description" content="Testing IPython notebook integration with pelican, pelican-bootstrap3, and liquid tags for IPython"/>
+        <meta property="article:published_time" content="2014-03-31" />
+            <meta property="article:section" content="Python" />
             <meta property="article:tag" content="pelican" />
-            <meta property="article:tag" content="publishing" />
-            <meta property="article:tag" content="workshops" />
-            <meta property="article:tag" content="python" />
-            <meta property="article:author" content="Rebecca Weiss" />
+            <meta property="article:tag" content="ipython" />
+            <meta property="article:tag" content="notebook" />
+            <meta property="article:author" content="Yafei Xu" />
 
 
 
@@ -60,10 +59,10 @@
                          <li><a href="../../../index.html">
                              Who am I?
                           </a></li>
-                        <li >
+                        <li class="active">
                             <a href="../../../category/python.html">Python</a>
                         </li>
-                        <li class="active">
+                        <li >
                             <a href="../../../category/thought.html">Thought</a>
                         </li>
             </ul>
@@ -85,10 +84,10 @@
         <article>
             <header class="page-header">
                 <h1>
-                    <a href="../../../articles/2014_04_25/vam-python/"
+                    <a href="../../../articles/2014_03_31/testing-ipython-integration/"
                        rel="bookmark"
-                       title="Permalink to Very Applied Methods workshop">
-                        Very Applied Methods workshop
+                       title="Permalink to How easy is it to use IPython notebooks with pelican?">
+                        How easy is it to use IPython notebooks with pelican?
                     </a>
                 </h1>
             </header>
@@ -98,7 +97,7 @@
 <footer class="post-info">
     <span class="label label-default">Date</span>
     <span class="published">
-        <i class="fa fa-calendar"></i><time datetime="2014-04-25T00:00:00-07:00"> 五 25 四月 2014</time>
+        <i class="fa fa-calendar"></i><time datetime="2014-03-31T20:33:00-07:00"> 一 31 三月 2014</time>
     </span>
 
 
@@ -108,19 +107,22 @@
 <span class="label label-default">Tags</span>
 	<a href="../../../tag/pelican.html">pelican</a>
         /
-	<a href="../../../tag/publishing.html">publishing</a>
+	<a href="../../../tag/ipython.html">ipython</a>
         /
-	<a href="../../../tag/workshops.html">workshops</a>
-        /
-	<a href="../../../tag/python.html">python</a>
+	<a href="../../../tag/notebook.html">notebook</a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <p>The <a href="https://politicalscience.stanford.edu/">Department of Political Science</a> at Stanford started the <a href="https://politicalscience.stanford.edu/workshops/political-methodology-workshop">Very Applied Methods workshop series</a>.</p>
-<p>I gave a workshop introducing Python with a brief application of simple page scraping.  </p>
-<p>The slides and related materials are all located here (note the capitalization): </p>
-<p><a href="http://rjweiss.github.io/VAM-Python/"><code>http://rjweiss.github.io/VAM-Python</code></a></p>
-<p>I will probably be revising those materials into a more general set of Python tutorials at some point.</p>
+                <p><strong>UPDATE 8/26/2014</strong>:Thanks to <a href="http://github.com/DandyDev">Daan Debie</a>, you no longer have to do any of the below if you're using the pelican-bootstrap3 theme.  Simply include the <code>liquid-tags.notebook</code> plugin in your pelican plugin list and you're good to go!</p>
+<hr>
+<p>In this post, I'm (selfishly) testing the integration between pelican and <code>IPython</code> notebooks.</p>
+<p>I've been meaning to do this for awhile, since I have quite a few <code>R</code> and <code>Python</code> tutorials on a variety of subjects written up as <code>IPython</code> notebooks, my distribution platform of choice.</p>
+<p>I was having trouble getting the <code>pelican-bootstrap3</code> theme to play nicely with the <code>liquid-tags</code> pelican plugin.  I have to give a hat-tip to <a href="http://theoryandpractice.org/">Kyle Cranmer</a> who posted his <a href="http://theoryandpractice.org/2014/03/Testing-Pelican-Migration/">solution</a> (involves chopping up the <code>_nb_header.html</code> and creating a <code>_nb_header_minimal.html</code>, which is referred to in your <code>pelicanconf.py</code> as <code>EXTRA_HEADER</code> instead).  </p>
+<p>It's crazy to see someone else with a similar workflow!  I only discovered his work since I was having <em>the worst time ever</em> trying to get pelican to play nicely with notebooks.</p>
+<p>His hack does the job, and now the notebooks are more nicely styled than without the additional css, but it makes me feel a little leery since it has the feel of something that will break with an update.  Oh well; that's what you get when you use open-source projects.</p>
+<p>Below the line is an example of an ipython notebook embedded in a pelican article.  It's as simple as creating a notebook and referring to {% notebook demonstration.ipynb %} in the article post.</p>
+<hr>
+<p>{% notebook demonstration.ipynb %}</p>
             </div>
             <!-- /.entry-content -->
         </article>
