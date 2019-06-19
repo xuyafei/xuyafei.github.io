@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Objective-c Runtime-类和对象 - 挪威的森林</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="../../../articles/2018_11_25/runtime-class-object/">
+
+        <meta name="author" content="Yafei Xu" />
+        <meta name="keywords" content="Objective-c,Runtime,Class" />
+        <meta name="description" content="Objective-c Runtime-类和对象的构造" />
+
+        <meta property="og:site_name" content="挪威的森林" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Objective-c Runtime-类和对象"/>
+        <meta property="og:url" content="../../../articles/2018_11_25/runtime-class-object/"/>
+        <meta property="og:description" content="Objective-c Runtime-类和对象的构造"/>
+        <meta property="article:published_time" content="2018-11-25" />
+            <meta property="article:section" content="iOS" />
+            <meta property="article:tag" content="Objective-c" />
+            <meta property="article:tag" content="Runtime" />
+            <meta property="article:tag" content="Class" />
+            <meta property="article:author" content="Yafei Xu" />
+
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="../../../theme/css/bootstrap.readable.min.css" type="text/css"/>
+    <link href="../../../theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="../../../theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../theme/css/style.css" type="text/css"/>
+        <link href="../../../static/css/custom.css" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="../../../" class="navbar-brand">
+挪威的森林            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                    <li><a href="/archives.html">archives</a></li>
+                         <li><a href="../../../pages/about/">
+                             Who am I?
+                          </a></li>
+                        <li class="active">
+                            <a href="../../../category/ios.html">Ios</a>
+                        </li>
+                        <li >
+                            <a href="../../../category/python.html">Python</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+
+<!-- Banner -->
+<!-- End Banner -->
+
+<!-- Content Container -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="../../../articles/2018_11_25/runtime-class-object/"
+                       rel="bookmark"
+                       title="Permalink to Objective-c Runtime-类和对象">
+                        Objective-c Runtime-类和对象
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2018-11-25T15:30:00-08:00"> 日 25 十一月 2018</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="../../../tag/objective-c.html">Objective-c</a>
+        /
+	<a href="../../../tag/runtime.html">Runtime</a>
+        /
+	<a href="../../../tag/class.html">Class</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h1>Objective-c Runtime-类和对象</h1>
+<h2>概述</h2>
+<p>作为一门动态语言，Objective-C将很多静态语言在编译和链接时做的事情放到了运行时去做，在运行时实现了对类、方法、成员变量、属性等信息的管理机制，即所谓的Objective-c Runtime机制。Runtime机制为苹果系的程序员的开发提供了多种便利之处，例如：</p>
+<ol>
+<li>在运行时创建或者修改一个类</li>
+<li>在运行时修改成员变量、属性等</li>
+<li>在运行时进行消息分发和分发绑定</li>
+</ol>
+<p>本文主要讨论Runtime机制下类和对象的动态构造和修改</p>
+<h2>类和对象</h2>
+<p>在面向对象(OOP)的世界里，类(Class)是逻辑和数据的抽象，是可扩展的代码模板，对象(Object)是类(Class)的特定的实例化。</p>
+<h3>对象(Object)</h3>
+<p>在Objective-C中,对象(Object)的定义如下：</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">objc_object</span> <span class="err">{</span>
+    <span class="k">Class</span> <span class="n">isa</span><span class="p">;</span>
+<span class="err">}</span><span class="p">;</span>
+
+<span class="n">typedef</span> <span class="n">struct</span> <span class="n">objc_object</span> <span class="o">*</span><span class="n">id</span><span class="p">;</span>
+</pre></div>
+
+
+<p>如代码所示，Objective-C中，对象的本质就是C语言中的结构体，结构体中只有一个成员变量，isa,而这个成员变量又代表什么呢？</p>
+<h3>类(Class)</h3>
+<p>在Objective-C中，类的数据结构可以在objc/runtime.h源码中定义：</p>
+<div class="highlight"><pre><span></span><span class="nv">struct</span> <span class="nv">objc_class</span> {
+        <span class="nv">Class</span> <span class="nv">_Nonnull</span> <span class="nv">isa</span>  <span class="nv">OBJC_ISA_AVAILABILITY</span><span class="c1">;</span>
+#<span class="k">if</span> <span class="o">!</span><span class="nv">__OBJC2__</span>
+        <span class="nv">Class</span> <span class="nv">_Nullable</span> <span class="nv">super_class</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">const</span> <span class="nv">char</span> <span class="o">*</span> <span class="nv">_Nonnull</span> <span class="nv">name</span> <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">long</span> <span class="nv">version</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">;        long info  OBJC2_UNAVAILABLE; </span>
+        <span class="nv">long</span> <span class="nv">instance_size</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">struct</span> <span class="nv">objc_ivar_list</span> <span class="o">*</span> <span class="nv">_Nullable</span> <span class="nv">ivars</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">struct</span> <span class="nv">objc_method_list</span> <span class="o">*</span> <span class="nv">_Nullable</span> <span class="o">*</span> <span class="nv">_Nullable</span> <span class="nv">methodLists</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">struct</span> <span class="nv">objc_cache</span> <span class="o">*</span> <span class="nv">_Nonnull</span> <span class="nv">cache</span>  <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+        <span class="nv">struct</span> <span class="nv">objc_protocol_list</span> <span class="o">*</span> <span class="nv">_Nullable</span> <span class="nv">protocols</span> <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">; </span>
+    #<span class="k">endif</span>
+} <span class="nv">OBJC2_UNAVAILABLE</span><span class="c1">;</span>
+
+<span class="nv">typedef</span> <span class="nv">struct</span> <span class="nv">objc_class</span> <span class="o">*</span><span class="nv">Class</span>
+</pre></div>
+
+
+<h4>isa</h4>
+<p>isa指针或许是这个结构体中最重要的变量，如果和对象(Object)的定义做比较，类(Class)和对象(Object)的定义都从isa指针开始，类(Class)的本质同样是一个结构体。</p>
+<h4>super_class</h4>
+<p>superclass同样是Class类型的指针，指向该类的父类，如果这个类本身已经是根类(NSObject or NSProxy),super_class指针被设置为NULL。</p>
+<h4>object_cache</h4>
+<p>object_cache缓存类中使用过的方法，当对象发送消息时，先从类中的缓存中搜索使用过的方法，如果没有搜索到，再从方法列表中搜索，缓存机制节省了方法调用的时间。而且在一些继承关系的类中，对象发送的消息可能来自于父类，如果没有缓存机制，就会比较耗时，使用缓存机制可以显著的降低查找时间。</p>
+<p>object_cache的定义如下</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">objc_cache</span> <span class="err">{</span>
+    <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">mask</span> <span class="cm">/* total = mask + 1 */</span><span class="p">;</span>
+    <span class="n">unsigned</span> <span class="nb">int</span> <span class="n">occupied</span><span class="p">;</span>
+    <span class="k">Method</span> <span class="n">buckets</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+<span class="err">}</span><span class="p">;</span>
+</pre></div>
+
+
+<ul>
+<li><strong>mask</strong>:     整数类型，指定分配的缓存bucket的总数;</li>
+<li><strong>occupied</strong>: 一个整数，指定实际占用的缓存bucket的总数;</li>
+<li><strong>buckets</strong>:  指向Method数据结构指针的数组。这个数组可能包含不超过mask+1个元素。</li>
+</ul>
+<h4>meta class(元类)</h4>
+<p>仔细思考一下，类(Class)结构体中的isa代表什么呢?对象结构体中的isa指针指向Class(类），是否可以认为Class(类)中的isa指向的是Class(类)的Class(类）？事实上，这样的理解完全正确。在Objective-C中，类也是一个对象，这种类对象是某一种类的实例，这种类就是元类(Meta Class)。</p>
+<p>类是作为对应的实例描述，元类则是类作为对象的描述。元类中方法列表对应的是类方法(Class Method)列表，这正是类作为一个对象所需要的。在如下的代码示例中，我们尝试通过向NSArray类对象发送消息，生成NSArray实例。记住我们此刻的讨论，类对象也是一种对象，由元类描述，向NSArray类对象发送消息，Runtime机制会从元类中查询接下来要做的事情。</p>
+<div class="highlight"><pre><span></span><span class="bp">NSArray</span> <span class="o">*</span><span class="n">array</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSArray</span> <span class="n">array</span><span class="p">];</span>
+</pre></div>
+
+
+<p>不同类(Class)类之间，便是通过元类存储的类方法的不同而互相区分的，理解这一点非常的重要。</p>
+<p>用一句简单的话来概括：</p>
+<p><strong>Class(类)描述了实例对象的行为。</strong></p>
+<p><strong>Meta Class(元类)描述了类对象的行为。</strong></p>
+<h4>meta-meta class?</h4>
+<p>作为一个善于思考的人，我们会猜测，Meta-Class(元类)的isa指针指向哪里呢？Meta-Class(元类)的Meta-Class(元类)？苹果公司给出了解决方案，元类的isa都指向根元类(Root Meta Class),即元类都是根元类的实例。
+而根元类(Root Meta Class)的isa则指向自己，这样就不会无休止的关联下去。
+为了便于理解，苹果官网给出了完整的Objective-C类结构图，如下图所示：</p>
+<p><img alt="blockchain" src="http://www.sealiesoftware.com/blog/class%20diagram.pdf"></p>
+<h3>相关函数</h3>
+<div class="highlight"><pre><span></span><span class="o">+</span> <span class="ss">(</span><span class="nv">Class</span><span class="ss">)</span><span class="nv">class</span> {
+    <span class="k">return</span> <span class="nv">self</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="o">-</span> <span class="ss">(</span><span class="nv">Class</span><span class="ss">)</span><span class="nv">class</span> {
+    <span class="k">return</span> <span class="nv">object_getClass</span><span class="ss">(</span><span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="o">+</span> <span class="ss">(</span><span class="nv">Class</span><span class="ss">)</span><span class="nv">superclass</span> {
+    <span class="k">return</span> <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">superclass</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">Class</span><span class="p">)</span><span class="nf">superclass</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">superclass</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="nv">Class</span> <span class="nv">object_getClass</span><span class="ss">(</span><span class="nv">id</span> <span class="nv">obj</span><span class="ss">)</span>
+{
+    <span class="k">if</span> <span class="ss">(</span><span class="nv">obj</span><span class="ss">)</span> 
+        <span class="k">return</span> <span class="nv">obj</span><span class="o">-&gt;</span><span class="nv">getIsa</span><span class="ss">()</span><span class="c1">;</span>
+    <span class="k">else</span> 
+        <span class="k">return</span> <span class="nv">Nil</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="p">+</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">isMemberOfClass:</span><span class="p">(</span><span class="kt">Class</span><span class="p">)</span><span class="nv">cls</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">object_getClass</span><span class="p">((</span><span class="kt">id</span><span class="p">)</span><span class="nb">self</span><span class="p">)</span> <span class="o">==</span> <span class="n">cls</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">isMemberOfClass:</span><span class="p">(</span><span class="kt">Class</span><span class="p">)</span><span class="nv">cls</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">]</span> <span class="o">==</span> <span class="n">cls</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="p">+</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">isKindOfClass:</span><span class="p">(</span><span class="kt">Class</span><span class="p">)</span><span class="nv">cls</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">Class</span> <span class="n">tcls</span> <span class="o">=</span> <span class="n">object_getClass</span><span class="p">((</span><span class="kt">id</span><span class="p">)</span><span class="nb">self</span><span class="p">);</span> <span class="n">tcls</span><span class="p">;</span> <span class="n">tcls</span> <span class="o">=</span> <span class="n">tcls</span><span class="o">-&gt;</span><span class="n">superclass</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tcls</span> <span class="o">==</span> <span class="n">cls</span><span class="p">)</span> <span class="k">return</span> <span class="nb">YES</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">NO</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">isKindOfClass:</span><span class="p">(</span><span class="kt">Class</span><span class="p">)</span><span class="nv">cls</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">Class</span> <span class="n">tcls</span> <span class="o">=</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">];</span> <span class="n">tcls</span><span class="p">;</span> <span class="n">tcls</span> <span class="o">=</span> <span class="n">tcls</span><span class="o">-&gt;</span><span class="n">superclass</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tcls</span> <span class="o">==</span> <span class="n">cls</span><span class="p">)</span> <span class="k">return</span> <span class="nb">YES</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">NO</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>以上函数很简单，可以参考NSObject.mm文件，通过以下实例代码可以了解这几个函数的具体用法：</p>
+<div class="highlight"><pre><span></span><span class="k">@interface</span> <span class="nc">People</span> : <span class="bp">NSObject</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">print</span><span class="p">;</span>
+
+<span class="k">@end</span>
+
+<span class="k">@implementation</span> <span class="nc">People</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">init</span>
+<span class="p">{</span>
+    <span class="nb">self</span> <span class="o">=</span> <span class="p">[</span><span class="nb">super</span> <span class="n">init</span><span class="p">];</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">self</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">print</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Hello World!&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">@end</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="k">@interface</span> <span class="nc">CodeFarmer</span> : <span class="nc">People</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testClass</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testMetaClass</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testSuperClass</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testGetNumberClass</span><span class="p">;</span>
+
+<span class="k">@end</span>
+
+<span class="k">@implementation</span> <span class="nc">CodeFarmer</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testClass</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;self class is %@, and super class is %@.&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">]</span> <span class="p">,[</span><span class="nb">self</span> <span class="n">superclass</span><span class="p">]);</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;self class is %@, and super class is %@.&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">],</span> <span class="p">[</span><span class="nb">super</span> <span class="k">class</span><span class="p">]);</span>
+<span class="p">}</span>
+
+<span class="k">@end</span>
+</pre></div>
+
+
+<p>我们在这里定义了两个简单的类，People和CodeFarmer，CodeFarmer继承于People,并且在CodeFarmer中定义了几个测试函数，首先执行testClass函数， 打印结果如下：</p>
+<div class="highlight"><pre><span></span><span class="o">//</span><span class="n">testClass</span>
+<span class="k">self</span> <span class="k">class</span> <span class="k">is</span> <span class="n">CodeFarmer</span><span class="p">,</span> <span class="k">and</span> <span class="n">super</span> <span class="k">class</span> <span class="k">is</span> <span class="n">People</span><span class="p">.</span>
+<span class="k">self</span> <span class="k">class</span> <span class="k">is</span> <span class="n">CodeFarmer</span><span class="p">,</span> <span class="k">and</span> <span class="n">super</span> <span class="k">class</span> <span class="k">is</span> <span class="n">CodeFarmer</span><span class="p">.</span>
+</pre></div>
+
+
+<p>第二句的打印结果或许让人难以理解，[super class]打印出来的结果却是本身的类，而不是基类。</p>
+<p>首先需要知道的是super与self不同。self是类的一个隐藏参数，每个方法的实现的第一个参数即为self。而super并不是隐藏参数，它实际上只是一个”编译器标示符”，它负责告诉编译器，当调用方法testClass时，去调用父类的方法，而不是本类中的方法。而它实际上与self指向的是相同的消息接收者。为了理解这一点，先来看super的定义：</p>
+<div class="highlight"><pre><span></span><span class="nv">struct</span> <span class="nv">objc_super</span> {
+    <span class="o">///</span> <span class="nv">Specifies</span> <span class="nv">an</span> <span class="nv">instance</span> <span class="nv">of</span> <span class="nv">a</span> <span class="nv">class</span>.
+    <span class="nv">__unsafe_unretained</span> <span class="nv">_Nonnull</span> <span class="nv">id</span> <span class="nv">receiver</span><span class="c1">;</span>
+
+    <span class="o">///</span> <span class="nv">Specifies</span> <span class="nv">the</span> <span class="nv">particular</span> <span class="nv">superclass</span> <span class="nv">of</span> <span class="nv">the</span> <span class="nv">instance</span> <span class="nv">to</span> <span class="nv">message</span>. 
+#<span class="k">if</span> <span class="o">!</span><span class="nv">defined</span><span class="ss">(</span><span class="nv">__cplusplus</span><span class="ss">)</span>  <span class="o">&amp;&amp;</span>  <span class="o">!</span><span class="nv">__OBJC2__</span>
+    <span class="cm">/* For compatibility with old objc-runtime.h header */</span>
+    <span class="nv">__unsafe_unretained</span> <span class="nv">_Nonnull</span> <span class="nv">Class</span> <span class="nv">class</span><span class="c1">;</span>
+#<span class="k">else</span>
+    <span class="nv">__unsafe_unretained</span> <span class="nv">_Nonnull</span> <span class="nv">Class</span> <span class="nv">super_class</span><span class="c1">;</span>
+#<span class="k">endif</span>
+    <span class="cm">/* super_class is the first class to search */</span>
+}<span class="c1">;</span>
+</pre></div>
+
+
+<p>这个结构体有两个成员： </p>
+<ol>
+<li>receiver:即消息的实际接收者。 </li>
+<li>superClass:指针当前类的父类。</li>
+</ol>
+<p>当使用super来接收消息时，编译器会生成一个objc_super结构体。就本例而言，结构体的receiver就是CodeFarmer对象，与self相同；superClass指向CodeFarmer的父类People。</p>
+<p>所欲，发送消息时，不是调用objc_msgSend函数，而是调用objc_msgSendSuper函数</p>
+<div class="highlight"><pre><span></span><span class="n">id</span> <span class="n">objc_msgSendSuper</span> <span class="p">(</span> <span class="n">struct</span> <span class="n">objc_super</span> <span class="o">*</span><span class="n">super</span><span class="p">,</span> <span class="n">SEL</span> <span class="n">op</span><span class="p">,</span> <span class="p">...</span> <span class="p">);</span>
+</pre></div>
+
+
+<p>该函数第一个参数即为前面生成的objc_super结构体，第二个参数是方法的selector。该函数实际的操作是：从objc_super结构体指向的superClass的方法列表开始查找class的selector，找到后以objc-&gt;receiver去调用这个selector，而此时的操作流程就是如下方式：</p>
+<div class="highlight"><pre><span></span><span class="n">objc_msgSend</span><span class="p">(</span><span class="n">objc_super</span><span class="o">-&gt;</span><span class="n">receiver</span><span class="p">,</span><span class="w"> </span><span class="nv">@selector</span><span class="p">(</span><span class="n">viewDidLoad</span><span class="p">));</span><span class="w"></span>
+</pre></div>
+
+
+<p>由于objc_super-&gt;receiver就是self本身，所以该方法实际与下面这个调用是相同的：</p>
+<div class="highlight"><pre><span></span><span class="n">objc_msgSend</span><span class="p">(</span><span class="n">self</span><span class="p">,</span><span class="w"> </span><span class="nv">@selector</span><span class="p">(</span><span class="k">class</span><span class="p">))</span><span class="w"></span>
+</pre></div>
+
+
+<p>super是当前类的实例，有一个方法接收者，是self。[super class]就是让self的superClass去执行方法，但是记住一点，super.class是当前类，self.superClass才是self的父类。</p>
+<p>继续分析CodeFarmer类中的第二个函数testMetaClass， 具体代码如下所示</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testMetaClass</span>
+<span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;//testMetaClass&quot;</span><span class="p">);</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;This object is %p.&quot;</span><span class="p">,</span> <span class="nb">self</span><span class="p">);</span>
+
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;-----This object is %p.&quot;</span><span class="p">,</span> <span class="n">object_getClass</span><span class="p">([</span><span class="nb">self</span> <span class="k">class</span><span class="p">]));</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Class is %@, and and super is %@.&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">],[</span><span class="nb">self</span> <span class="n">superclass</span><span class="p">]);</span>
+
+    <span class="kt">Class</span> <span class="n">currentClass</span> <span class="o">=</span> <span class="p">[</span><span class="nb">self</span> <span class="k">class</span><span class="p">];</span>
+
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;&quot;</span><span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Following the isa pointer %d times gives %p&quot;</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">currentClass</span><span class="p">);</span>
+        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;The Class String is %@&quot;</span><span class="p">,</span> <span class="n">NSStringFromClass</span><span class="p">(</span><span class="n">currentClass</span><span class="p">));</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">class_isMetaClass</span><span class="p">(</span><span class="n">currentClass</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;It is Meta Class&quot;</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;It is Not Meta Class&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">currentClass</span> <span class="o">=</span> <span class="n">object_getClass</span><span class="p">(</span><span class="n">currentClass</span><span class="p">);</span>
+        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">//Note we can not get meta class by [Person class], it only returns class</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;NSObject&#39;s meta class is %p&quot;</span><span class="p">,</span> <span class="n">object_getClass</span><span class="p">([</span><span class="bp">NSObject</span> <span class="k">class</span><span class="p">]));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>函数执行之后的打印输出为：</p>
+<div class="highlight"><pre><span></span><span class="mi">2</span><span class="o">//</span><span class="n">testMetaClass</span>
+<span class="n">This</span> <span class="k">object</span> <span class="k">is</span> <span class="mi">0</span><span class="n">x100708df0</span><span class="p">.</span>
+<span class="c1">-----This object is 0x100002538.</span>
+<span class="k">Class</span> <span class="k">is</span> <span class="n">CodeFarmer</span><span class="p">,</span> <span class="k">and</span> <span class="k">and</span> <span class="n">super</span> <span class="k">is</span> <span class="n">People</span><span class="p">.</span>
+
+<span class="n">Following</span> <span class="n">the</span> <span class="n">isa</span> <span class="n">pointer</span> <span class="mi">1</span> <span class="n">times</span> <span class="n">gives</span> <span class="mi">0</span><span class="n">x100002510</span>
+<span class="n">The</span> <span class="k">Class</span> <span class="n">String</span> <span class="k">is</span> <span class="n">CodeFarmer</span>
+<span class="n">It</span> <span class="k">is</span> <span class="k">Not</span> <span class="n">Meta</span> <span class="k">Class</span>
+
+<span class="n">Following</span> <span class="n">the</span> <span class="n">isa</span> <span class="n">pointer</span> <span class="mi">2</span> <span class="n">times</span> <span class="n">gives</span> <span class="mi">0</span><span class="n">x100002538</span>
+<span class="n">The</span> <span class="k">Class</span> <span class="n">String</span> <span class="k">is</span> <span class="n">CodeFarmer</span>
+<span class="n">It</span> <span class="k">is</span> <span class="n">Meta</span> <span class="k">Class</span>
+
+<span class="n">Following</span> <span class="n">the</span> <span class="n">isa</span> <span class="n">pointer</span> <span class="mi">3</span> <span class="n">times</span> <span class="n">gives</span> <span class="mi">0</span><span class="n">x7fffb53b60f0</span>
+<span class="n">The</span> <span class="k">Class</span> <span class="n">String</span> <span class="k">is</span> <span class="n">NSObject</span>
+<span class="n">It</span> <span class="k">is</span> <span class="n">Meta</span> <span class="k">Class</span>
+
+<span class="n">Following</span> <span class="n">the</span> <span class="n">isa</span> <span class="n">pointer</span> <span class="mi">4</span> <span class="n">times</span> <span class="n">gives</span> <span class="mi">0</span><span class="n">x7fffb53b60f0</span>
+<span class="n">The</span> <span class="k">Class</span> <span class="n">String</span> <span class="k">is</span> <span class="n">NSObject</span>
+<span class="n">It</span> <span class="k">is</span> <span class="n">Meta</span> <span class="k">Class</span>
+
+<span class="n">NSObject</span><span class="err">&#39;</span><span class="n">s</span> <span class="n">meta</span> <span class="k">class</span> <span class="k">is</span> <span class="mi">0</span><span class="n">x7fffb53b60f0</span>
+</pre></div>
+
+
+<p>指针实际打印出来的地址值并不重要，主要是帮助我们分析问题，通过追踪指针打印出来的实际值，可以看到，CodeFarmer的实例变量的地址为0x100708df0，循环第一次打印的值为类对象的地址0x100002510，其元类对象的地址为0x100002538，根元类的地址为0x7fffb53b60f0，第四次循环打印的值同样为0x7fffb53b60f0，说明根元类的元类是其本身。</p>
+<p>class_isMetaClass的代码如下，简单易懂，所以不再赘述：</p>
+<div class="highlight"><pre><span></span><span class="nv">BOOL</span> <span class="nv">class_isMetaClass</span><span class="ss">(</span><span class="nv">Class</span> <span class="nv">cls</span><span class="ss">)</span>
+{
+    <span class="k">if</span> <span class="ss">(</span><span class="o">!</span><span class="nv">cls</span><span class="ss">)</span> <span class="k">return</span> <span class="nv">NO</span><span class="c1">;</span>
+    <span class="k">return</span> <span class="nv">cls</span><span class="o">-&gt;</span><span class="nv">isMetaClass</span><span class="ss">()</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>其他Runtime关于(Class)类的相关函数</p>
+<div class="highlight"><pre><span></span><span class="o">//</span> 获取类的类名
+<span class="nv">const</span> <span class="nv">char</span> <span class="o">*</span> <span class="nv">class_getName</span> <span class="ss">(</span> <span class="nv">Class</span> <span class="nv">cls</span> <span class="ss">)</span> 
+{
+    <span class="k">if</span> <span class="ss">(</span><span class="o">!</span><span class="nv">cls</span><span class="ss">)</span> <span class="k">return</span> <span class="s2">&quot;</span><span class="s">nil</span><span class="s2">&quot;</span><span class="c1">;</span>
+    <span class="o">//</span> <span class="nv">fixme</span> <span class="nv">lldb</span> <span class="nv">calls</span> <span class="nv">class_getName</span><span class="ss">()</span> <span class="nv">on</span> <span class="nv">unrealized</span> <span class="nv">classes</span> <span class="ss">(</span><span class="nv">rdar</span>:<span class="o">//</span><span class="mi">27258517</span><span class="ss">)</span>
+    <span class="o">//</span> <span class="nv">assert</span><span class="ss">(</span><span class="nv">cls</span><span class="o">-&gt;</span><span class="nv">isRealized</span><span class="ss">()</span>  <span class="o">||</span>  <span class="nv">cls</span><span class="o">-&gt;</span><span class="nv">isFuture</span><span class="ss">())</span><span class="c1">;</span>
+    <span class="k">return</span> <span class="nv">cls</span><span class="o">-&gt;</span><span class="nv">demangledName</span><span class="ss">()</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="o">//</span> 判断给定的<span class="nv">Class</span>是否是一个元类
+<span class="nv">Class</span> <span class="nv">class_getSuperclass</span><span class="ss">(</span><span class="nv">Class</span> <span class="nv">cls</span><span class="ss">)</span>
+{
+    <span class="k">if</span> <span class="ss">(</span><span class="o">!</span><span class="nv">cls</span><span class="ss">)</span> <span class="k">return</span> <span class="nv">nil</span><span class="c1">;</span>
+    <span class="k">return</span> <span class="nv">cls</span><span class="o">-&gt;</span><span class="nv">superclass</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<h3>动态创建类与对象</h3>
+<p>Runtime提供在运行时创建类与对象的方法</p>
+<h4>动态创建类</h4>
+<div class="highlight"><pre><span></span><span class="o">//</span> <span class="err">创建一个新类和元类</span>
+<span class="k">Class</span> <span class="n">objc_allocateClassPair</span> <span class="p">(</span> <span class="k">Class</span> <span class="n">superclass</span><span class="p">,</span> <span class="n">const</span> <span class="nb">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">extraBytes</span> <span class="p">);</span>
+<span class="o">//</span> <span class="err">销毁一个类及其相关联的类</span>
+<span class="n">void</span> <span class="n">objc_disposeClassPair</span> <span class="p">(</span> <span class="k">Class</span> <span class="n">cls</span> <span class="p">);</span>
+<span class="o">//</span> <span class="err">在应用中注册由</span><span class="n">objc_allocateClassPair</span><span class="err">创建的类</span>
+<span class="n">void</span> <span class="n">objc_registerClassPair</span> <span class="p">(</span> <span class="k">Class</span> <span class="n">cls</span> <span class="p">);</span>
+</pre></div>
+
+
+<p>创建一个新类，首先，需要调用objc_allocateClassPair</p>
+<p>objc_allocateClassPair函数：要创建一个根类，则superclass指定为Nil。extraBytes通常指定为0，该参数是分配给类和元类对象尾部的索引ivars的字节数;</p>
+<p>完成上述代码之后，需要调用objc_registerClassPair函数来注册类，之后这个新类就可以在程序中使用。</p>
+<p>objc_disposeClassPair函数用于销毁一个类，但是如果程序运行中还存在类或其子类的实例，则不能调用针对类调用该方法。</p>
+<p>示例如下：</p>
+<div class="highlight"><pre><span></span><span class="kt">Class</span> <span class="n">cls</span> <span class="o">=</span> <span class="n">objc_allocateClassPair</span><span class="p">([</span><span class="n">People</span> <span class="k">class</span><span class="p">],</span> <span class="s">&quot;CodeMan&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="n">objc_registerClassPair</span><span class="p">(</span><span class="n">cls</span><span class="p">);</span>
+<span class="kt">id</span> <span class="n">codeMan</span> <span class="o">=</span> <span class="p">[[</span><span class="n">cls</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+<span class="p">[</span><span class="n">codeMan</span> <span class="n">print</span><span class="p">];</span>
+</pre></div>
+
+
+<p>打印结果：</p>
+<div class="highlight"><pre><span></span><span class="n">Hello</span> <span class="n">World</span><span class="o">!</span>
+</pre></div>
+
+
+<h4>动态创建对象</h4>
+<div class="highlight"><pre><span></span><span class="o">//</span> <span class="err">创建类实例</span>
+<span class="n">id</span> <span class="n">class_createInstance</span> <span class="p">(</span> <span class="k">Class</span> <span class="n">cls</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">extraBytes</span> <span class="p">);</span>
+<span class="o">//</span> <span class="err">在指定位置创建类实例</span>
+<span class="n">id</span> <span class="n">objc_constructInstance</span> <span class="p">(</span> <span class="k">Class</span> <span class="n">cls</span><span class="p">,</span> <span class="n">void</span> <span class="o">*</span><span class="n">bytes</span> <span class="p">);</span>
+<span class="o">//</span> <span class="err">销毁类实例</span>
+<span class="n">void</span> <span class="o">*</span> <span class="n">objc_destructInstance</span> <span class="p">(</span> <span class="n">id</span> <span class="n">obj</span> <span class="p">);</span>
+</pre></div>
+
+
+<p>class_createInstance函数：创建实例时，会在默认的内存区域为类分配内存。</p>
+<p>extraBytes参数表示分配的额外字节数。这些额外的字节可用于存储在类定义中所定义的实例变量之外的实例变量，该函数在ARC环境下无法使用 ；</p>
+<p>调用class_createInstance的效果与+alloc方法类似。</p>
+<p>不过在使用class_createInstance时，我们需要确切的知道我们要用它来做什么。在如下的例子中，用NSString来测试一下该函数的实际效果:</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testInstanceMethod</span><span class="p">{</span>
+    <span class="kt">id</span> <span class="n">stringObject</span> <span class="o">=</span> <span class="n">class_createInstance</span><span class="p">([</span><span class="bp">NSString</span> <span class="k">class</span><span class="p">],</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">unsigned</span><span class="p">));</span>
+    <span class="kt">id</span> <span class="n">str1</span> <span class="o">=</span> <span class="p">[</span><span class="n">stringObject</span> <span class="n">init</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">str1</span> <span class="k">class</span><span class="p">]);</span>
+
+    <span class="kt">id</span> <span class="n">str2</span> <span class="o">=</span> <span class="s">@&quot;test&quot;</span><span class="p">;</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;%@&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">str2</span> <span class="k">class</span><span class="p">]);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>打印结果：</p>
+<div class="highlight"><pre><span></span> <span class="n">NSString</span>
+ <span class="n">__NSCFConstantString</span>
+</pre></div>
+
+
+<p>可见 使用class_createInstance函数获取的是NSString实例，</p>
+<p>而不是类簇中的默认占位符类__NSCFConstantString;</p>
+<p>objc_constructInstance函数：在指定的位置(bytes)创建类实例;</p>
+<p>objc_destructInstance函数：销毁一个类的实例，但不会释放并移除任何与其相关的引用;</p>
+<h2>总结</h2>
+<p>本文总结了在Runtime时类与对象相关方法和数据结构，而且会在这篇文章中时时补充新的知识点以及新的看法。</p>
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+<div id="aboutme">
+        <p>
+            <img width="100%" class="img-thumbnail" src="../../../images/xuyafei_2019-6-14.jpg"/>
+        </p>
+    <p>
+      <strong>About 挪威的森林</strong><br/>
+        I work at Beijing. I focus on tools and services for developer productivity, including build and testing.My other interests include programming language design, game development, and learning languages (the non-programming ones).
+    </p>
+</div><!-- Sidebar -->
+<section class="well well-sm">
+  <ul class="list-group list-group-flush">
+
+<!-- Sidebar/Social -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Social</span></h4>
+  <ul class="list-group" id="social">
+    <li class="list-group-item"><a href="http://twitter.com/DaanDebie"><i class="fa fa-twitter-square fa-lg"></i> twitter</a></li>
+    <li class="list-group-item"><a href="http://www.linkedin.com/in/danieldebie"><i class="fa fa-linkedin-square fa-lg"></i> linkedin</a></li>
+    <li class="list-group-item"><a href="http://github.com/DandyDev"><i class="fa fa-github-square fa-lg"></i> github</a></li>
+    <li class="list-group-item"><a href="http://stackoverflow.com/users/872397/dandydev"><i class="fa fa-stack-overflow fa-lg"></i> stackoverflow</a></li>
+  </ul>
+</li>
+<!-- End Sidebar/Social -->
+
+<!-- Sidebar/Authors -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Authors</span></h4>
+  <ul class="list-group" id="authors">
+    <li class="list-group-item">
+      <a href="../../../author/yafei-xu.html"><i class="fa fa-user fa-lg"></i>Yafei Xu</a>
+      (3)
+    </li>
+  </ul>
+</li>
+<!-- End Sidebar/Authors -->
+  </ul>
+</section>
+<!-- End Sidebar -->            </aside>
+        </div>
+    </div>
+</div>
+<!-- End Content Container -->
+
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2018 挪威的森林
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="../../../theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="../../../theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="../../../theme/js/respond.min.js"></script>
+
+    <script src="../../../static/js/custom.js"></script>
+
+
+
+</body>
+</html>
