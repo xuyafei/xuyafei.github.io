@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>C语言中的面向对象编程(Object-Oriented Programming) - 挪威的森林</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="../../../articles/2018_12_05/Object-Oriented Programming/">
+
+        <meta name="author" content="Yafei Xu" />
+        <meta name="keywords" content="C,面向对象,封装，继承，多态" />
+        <meta name="description" content="OOP的实现原理" />
+
+        <meta property="og:site_name" content="挪威的森林" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="C语言中的面向对象编程(Object-Oriented Programming)"/>
+        <meta property="og:url" content="../../../articles/2018_12_05/Object-Oriented Programming/"/>
+        <meta property="og:description" content="OOP的实现原理"/>
+        <meta property="article:published_time" content="2018-12-05" />
+            <meta property="article:section" content="C Language" />
+            <meta property="article:tag" content="C" />
+            <meta property="article:tag" content="面向对象" />
+            <meta property="article:tag" content="封装，继承，多态" />
+            <meta property="article:author" content="Yafei Xu" />
+
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="../../../theme/css/bootstrap.readable.min.css" type="text/css"/>
+    <link href="../../../theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="../../../theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../theme/css/style.css" type="text/css"/>
+        <link href="../../../static/css/custom.css" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="../../../" class="navbar-brand">
+挪威的森林            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                    <li><a href="/archives.html">archives</a></li>
+                         <li><a href="../../../pages/about/">
+                             Who am I?
+                          </a></li>
+                        <li class="active">
+                            <a href="../../../category/c-language.html">C language</a>
+                        </li>
+                        <li >
+                            <a href="../../../category/objective-c.html">Objective-c</a>
+                        </li>
+                        <li >
+                            <a href="../../../category/python.html">Python</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+
+<!-- Banner -->
+<!-- End Banner -->
+
+<!-- Content Container -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="../../../articles/2018_12_05/Object-Oriented Programming/"
+                       rel="bookmark"
+                       title="Permalink to C语言中的面向对象编程(Object-Oriented Programming)">
+                        C语言中的面向对象编程(Object-Oriented Programming)
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2018-12-05T18:30:00-08:00"> 三 05 十二月 2018</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="../../../tag/c.html">C</a>
+        /
+	<a href="../../../tag/mian-xiang-dui-xiang.html">面向对象</a>
+        /
+	<a href="../../../tag/feng-zhuang-ji-cheng-duo-tai.html">封装，继承，多态</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h1>C语言中的面向对象编程(Object-Oriented Programming)</h1>
+<h2>概述</h2>
+<p>面向对象编程（OOP）不仅仅是在特定的编程语言中使用或者不应该被认为是一种工具， 而应该被认为是基于三个基本概念的软件设计方法学：</p>
+<ol>
+<li>封装：将数据和操作数据的函数打包到类中；</li>
+<li>继承：能够基于现有的已经存在的类，去定义新的类，达到代码重用和代码扩展的目的；</li>
+<li>多态：在运行时不同的对象对同一消息的不同响应。</li>
+</ol>
+<p>虽然这些设计模式被认为是传统的面向对象语言的专利（如Smalltalk，C ++或Java），但是你可以使用任何编程语言去实现它们，包括标准C语言。</p>
+<h2>封装</h2>
+<p>封装是指将函数和数据打包到类中。 对于任何C程序员来说，这个概念实际上应该非常熟悉，因为它经常被用于传统的C语言中。例如，在标准C运行时库中，包含fopen()，fclose()，fread()，fwrite()等的函数族对FILE类型的对象进行操作。因为客户端程序员不需要访问FILE结构的内部属性，因此FILE结构被封装，整个文件接口只包含上述的几个函数。</p>
+<p>你可以将FILE结构和相关的操作FILE结构C函数视为FILE类。 以下几点内容总结了C运行时库如何实现FILE类：</p>
+<ol>
+<li>类的属性使用标准C结构体（FILE结构）定义；</li>
+<li>类的函数被定义为标准C函数。 每个函数都将一个指向属性结构（例如FILE *）的指针作为参数。 类函数通常遵循通用命名约定（例如，所有FILE类方法都以前缀f开头）；</li>
+<li>定义特定的函数初始化并清理属性结构（如fopen()和fclose()），这些函数分别扮演类的构造函数和析构函数的角色。</li>
+</ol>
+<p>根据以上的这些原则，用标准C语言也可以设计出符合面向对象思想的类。可以通过代码分步讲解面向对象的三个原则的设计</p>
+<p><strong>Shape.h</strong></p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">Shape</span> <span class="err">{</span>
+    <span class="nb">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">y</span><span class="p">;</span>
+<span class="err">}</span><span class="p">;</span>
+
+<span class="cm">/*</span>
+<span class="cm"> * 注意这里self的使用</span>
+<span class="cm"> * /</span>
+<span class="cm">struct Shape * Shape_create( int x, int y );</span>
+<span class="cm">void Shape_init( struct Shape * self, int x, int y );</span>
+<span class="cm">void Shape_move( struct Shape * self, int dx, int dy);</span>
+</pre></div>
+
+
+<p><strong>Shape.c</strong></p>
+<div class="highlight"><pre><span></span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">Shape_create</span><span class="ss">(</span> <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span> <span class="ss">)</span>
+{
+    <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span><span class="nv">s</span> <span class="o">=</span> <span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="ss">)</span><span class="nv">malloc</span><span class="ss">(</span> <span class="nv">sizeof</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="ss">)</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="nv">s</span><span class="o">-&gt;</span><span class="nv">x</span> <span class="o">=</span> <span class="nv">x</span><span class="c1">;</span>
+    <span class="nv">s</span><span class="o">-&gt;</span><span class="nv">y</span> <span class="o">=</span> <span class="nv">y</span><span class="c1">;</span>
+
+    <span class="k">return</span> <span class="nv">s</span><span class="c1">;</span>
+}
+
+<span class="nv">void</span> <span class="nv">Shape_init</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">self</span>, <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span> <span class="ss">)</span>
+{
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">x</span> <span class="o">=</span> <span class="nv">x</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">y</span> <span class="o">=</span> <span class="nv">y</span><span class="c1">;</span>
+}
+
+
+<span class="nv">void</span> <span class="nv">Shape_move</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span><span class="nv">self</span>, <span class="nv">int</span> <span class="nv">dx</span>, <span class="nv">int</span> <span class="nv">dy</span> <span class="ss">)</span>
+{
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">x</span> <span class="o">+=</span> <span class="nv">dx</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">y</span> <span class="o">+=</span> <span class="nv">dy</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p><strong>main.c</strong></p>
+<div class="highlight"><pre><span></span> <span class="n">struct</span> <span class="n">Shape</span> <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">Shape_create</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+ <span class="n">printf</span><span class="p">(</span><span class="ss">&quot;Original : (%d, %d)\n&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">-&gt;</span><span class="n">x</span><span class="p">,</span> <span class="n">s</span><span class="o">-&gt;</span><span class="n">y</span><span class="p">);</span>
+ <span class="n">Shape_move</span><span class="p">(</span> <span class="n">s</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span> <span class="p">);</span>
+ <span class="n">printf</span><span class="p">(</span><span class="ss">&quot;After move : (%d, %d)\n&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">-&gt;</span><span class="n">x</span><span class="p">,</span> <span class="n">s</span><span class="o">-&gt;</span><span class="n">y</span><span class="p">);</span>
+</pre></div>
+
+
+<p><strong>打印结果</strong></p>
+<div class="highlight"><pre><span></span><span class="n">original</span> <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="k">After</span> <span class="k">move</span> <span class="p">:</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+
+<p>这里定义了一个叫做Shape的结构体，外界只能通过相关的函数来对这个Shape进行操作，例如</p>
+<ol>
+<li>
+<p>创建(Shape_create)， </p>
+</li>
+<li>
+<p>移动(Shape_move), </p>
+</li>
+<li>
+<p>获取位置(Shape_getX)，</p>
+</li>
+</ol>
+<p>不能直接访问Shape的内部数据结构,虽然这里没有class这样的关键字，数据结构和相关操作是分开写的，看起来不太完美， 但确实是实现了封装。</p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/1.jpg"></center></p>
+<h2>继承</h2>
+<p>继承是基于现有类定义新类以便重用和扩展代码的方法。 利用标准C语言的基本语法，将基类作为继承类的第一个结构体成员，可以轻松地在C中实现单继承。例如，相对于从头开始创建一个全新的Rectangle类，可以从已经存在的Shape类继承，并且在继承的类中增加Rectangele类独有的属性，如下代码所示：</p>
+<p><strong>Rectangle.h</strong></p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">Rectangle</span> <span class="err">{</span>
+    <span class="n">struct</span> <span class="n">Shape</span> <span class="n">base</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">width</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">height</span><span class="p">;</span>
+<span class="err">}</span><span class="p">;</span>
+
+<span class="n">struct</span> <span class="n">Rectangle</span> <span class="o">*</span> <span class="n">rectangle_create</span><span class="p">(</span> <span class="nb">int</span> <span class="n">x</span><span class="p">,</span> <span class="nb">int</span> <span class="n">y</span><span class="p">,</span> <span class="nb">int</span> <span class="n">width</span><span class="p">,</span> <span class="nb">int</span> <span class="n">height</span> <span class="p">);</span>
+</pre></div>
+
+
+<p><strong>Rectangle.c</strong></p>
+<div class="highlight"><pre><span></span><span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="o">*</span> <span class="nv">rectangle_create</span><span class="ss">(</span> <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span>, <span class="nv">int</span> <span class="nv">width</span>, <span class="nv">int</span> <span class="nv">height</span> <span class="ss">)</span>
+{
+    <span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="o">*</span> <span class="nv">r</span> <span class="o">=</span> <span class="nv">malloc</span><span class="ss">(</span> <span class="nv">sizeof</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="ss">)</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="nv">Shape_init</span><span class="ss">(</span> <span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span><span class="ss">)</span><span class="nv">r</span>, <span class="nv">x</span>, <span class="nv">y</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="nv">r</span><span class="o">-&gt;</span><span class="nv">width</span> <span class="o">=</span> <span class="nv">width</span><span class="c1">;</span>
+    <span class="nv">r</span><span class="o">-&gt;</span><span class="nv">height</span> <span class="o">=</span> <span class="nv">height</span><span class="c1">;</span>
+
+    <span class="k">return</span> <span class="nv">r</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p><strong>main.c</strong></p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">Rectangle</span> <span class="o">*</span><span class="n">rectangle</span> <span class="o">=</span> <span class="n">rectangle_create</span><span class="p">(</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span> <span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="ss">&quot;Rectangle is ( %d, %d, %d, %d)\n&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">).</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">).</span><span class="n">y</span><span class="p">,</span> <span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">width</span><span class="p">,</span> <span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">height</span><span class="p">);</span>
+
+<span class="n">Shape_move</span><span class="p">(</span> <span class="p">(</span><span class="n">struct</span> <span class="n">Shape</span> <span class="o">*</span><span class="p">)</span><span class="n">rectangle</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span> <span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="ss">&quot;After Move Rectangle is ( %d, %d, %d, %d)\n&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">).</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">).</span><span class="n">y</span><span class="p">,</span> <span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">width</span><span class="p">,</span> <span class="n">rectangle</span><span class="o">-&gt;</span><span class="n">height</span><span class="p">);</span>
+</pre></div>
+
+
+<p><strong>打印结果</strong></p>
+<div class="highlight"><pre><span></span><span class="n">Rectangle</span> <span class="k">is</span> <span class="p">(</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="k">After</span> <span class="k">Move</span> <span class="n">Rectangle</span> <span class="k">is</span> <span class="p">(</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+
+<p>从下图中可以看到Rectangle的内存模型</p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/2.jpg"></center></p>
+<p>通过这种组合的方式，也算是实现了继承</p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/3.jpg"></center></p>
+<h3>Note</h3>
+<p>如代码所示，要调用继承的函数，需要将第一个“self”参数显式地转换到超类(Shape *)，或者，可以避免转换并获取成员“base”的地址(&amp;r-&gt;base)。</p>
+<p>对于子类的实例对象使用“继承”函数没有额外的成本。换句话说，为子类的对象调用函数的成本与为超类的对象调用相同的函数一样昂贵。这种调用的开销也与C++非常相似。</p>
+<h2>多态</h2>
+<p>在面向对象语言中，接口的多种不同的实现方式即为多态。引用Charlie Calverts对多态的描述——多态性是允许你将父对象设置成为一个或更多的他的子对象相等的技术，赋值之后，父对象就可以根据当前赋值给它的子对象的特性以不同的方式运作。</p>
+<p>C++通过虚函数的方式实现多态。在标准C语言中，也可以有多种方式实现虚函数。本文介绍的方法与C++中的虚函数具有非常相似的性能和内存开销。</p>
+<p>还是用之前的Shape类作为例子来说明虚函数是如何作用于多态的。这个类可以提供很多有用的操作，例如area()(计算自己的区域)或draw()(让形状在屏幕上绘制)。但问题在于Shape类无法提供此类操作的实际实现，因为Shape过于抽象而且“不知道”如何计算，比如说计算自己的区域。对于Rectangle子类（width * height）而言，计算方法与Square子类（pi * radius2）的计算又非常不同。但是，这并不意味着Shape不能提供此类操作的接口，</p>
+<p>如Shape_area()或者Shape_drawn()，代码如下所示</p>
+<div class="highlight"><pre><span></span><span class="nv">struct</span> <span class="nv">ShapeVtbl</span><span class="c1">;</span>
+
+<span class="nv">struct</span> <span class="nv">Shape</span> {
+    <span class="nv">struct</span> <span class="nv">ShapeVtbl</span> <span class="nv">const</span> <span class="o">*</span><span class="nv">vptr</span><span class="c1">;</span>
+    <span class="nv">int</span> <span class="nv">x</span><span class="c1">;</span>
+    <span class="nv">int</span> <span class="nv">y</span><span class="c1">;</span>
+}<span class="c1">;</span>
+
+<span class="nv">struct</span> <span class="nv">ShapeVtbl</span> {
+    <span class="nv">int</span> <span class="ss">(</span><span class="o">*</span><span class="nv">area</span><span class="ss">)(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="nv">void</span> <span class="ss">(</span><span class="o">*</span><span class="nv">draw</span><span class="ss">)(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span> <span class="ss">)</span><span class="c1">;</span>
+}<span class="c1">;</span>
+
+<span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">Shape_create</span><span class="ss">(</span> <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span> <span class="ss">)</span><span class="c1">;</span>
+<span class="nv">void</span> <span class="nv">Shape_init</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">self</span>, <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span> <span class="ss">)</span><span class="c1">;</span>
+<span class="nv">void</span> <span class="nv">Shape_move</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">self</span>, <span class="nv">int</span> <span class="nv">dx</span>, <span class="nv">int</span> <span class="nv">dy</span><span class="ss">)</span><span class="c1">;</span>
+
+<span class="nv">static</span> <span class="nv">inline</span> <span class="nv">int</span> <span class="nv">Shape_area</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span> <span class="ss">)</span>
+{
+    <span class="k">return</span> <span class="ss">(</span><span class="o">*</span><span class="nv">self</span><span class="o">-&gt;</span><span class="nv">vptr</span><span class="o">-&gt;</span><span class="nv">area</span><span class="ss">)(</span><span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+}
+
+<span class="nv">static</span> <span class="nv">inline</span> <span class="nv">void</span> <span class="nv">Shape_draw</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span> <span class="ss">)</span>
+{
+    <span class="ss">(</span><span class="o">*</span><span class="nv">self</span><span class="o">-&gt;</span><span class="nv">vptr</span><span class="o">-&gt;</span><span class="nv">draw</span><span class="ss">)(</span><span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>实际上，这样的接口非常有用，因为它允许程序员编写通用的代码处理基类及其子类的统一的接口。例如，给定这样的一个接口，能够编写通用函数来绘制屏幕上的所有形状或计算所有形状图形的面积。如下图所示</p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/4.jpg"></center></p>
+<h3>虚函数表(vtbl)和虚函数指针(vptr)</h3>
+<p>到目前为止，应该清楚的是，单个虚函数(如Shape_area()),可以在Shape的子类中具有许多不同的实现。例如，Shape的Rectangle子类与Square子类计算其图形面积的方式并不相同。这意味着在链接时无法解析虚函数的调用，就像在标准C语言中对普通函数调用所做的那样，因为要调用的函数的实际版本取决于对象的类型(矩形、圆形等)。因此，虚函数调用和实际实现之间的绑定必须在运行时进行，这称为后期绑定(与链接时绑定相反，链接时绑定也称为早期绑定)。</p>
+<p>实际上，所有C++编译器都是通过每个类的一个虚表(vtbl)和每个对象的虚指针(vptr)来实现后期绑定。这种方法也适用于标准C语言。</p>
+<p>虚表是与类引入的虚函数相对应的函数指针表。在C语言中，可以通过指向函数的指针结构体来模拟虚表。如下代码所示：</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">ShapeVtbl</span> <span class="err">{</span>
+    <span class="nb">int</span> <span class="p">(</span><span class="o">*</span><span class="n">area</span><span class="p">)(</span> <span class="n">struct</span> <span class="n">Shape</span> <span class="n">const</span> <span class="o">*</span> <span class="n">const</span> <span class="k">self</span> <span class="p">);</span>
+    <span class="n">void</span> <span class="p">(</span><span class="o">*</span><span class="n">draw</span><span class="p">)(</span> <span class="n">struct</span> <span class="n">Shape</span> <span class="n">const</span> <span class="o">*</span> <span class="n">const</span> <span class="k">self</span> <span class="p">);</span>
+<span class="err">}</span><span class="p">;</span>
+</pre></div>
+
+
+<p>虚指针(vptr)是指向类的虚表的指针。该指针必须存在于类的每个实例（对象）中，因此它必须进入类的属性结构中。例如，shape类的属性结构增加了顶部添加的vptr成员，如以下代码清单所示：</p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">ShapeVtbl</span><span class="p">;</span>
+
+<span class="n">struct</span> <span class="n">Shape</span> <span class="err">{</span>
+    <span class="n">struct</span> <span class="n">ShapeVtbl</span> <span class="n">const</span> <span class="o">*</span><span class="n">vptr</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">x</span><span class="p">;</span>
+    <span class="nb">int</span> <span class="n">y</span><span class="p">;</span>
+<span class="err">}</span><span class="p">;</span>
+</pre></div>
+
+
+<p>vptr被声明为指向不可变对象的指针(请参见*前面的const关键字)，因为虚表不应该被更改。</p>
+<p>虚指针（vptr）由所有子类继承，因此Shape类的vptr将自动在其所有子类中可用，如Rectangle类、Square类等。</p>
+<h3>在构造函数中设置vptr</h3>
+<p>虚指针(vptr)必须初始化为指向类的每个实例(对象)中相应的虚表(vtbl),执行虚指针(vptr)初始化的理想位置是类的构造函数。事实上，这也正是C++编译器vptr隐式初始化的地方。</p>
+<p>在标准C语言中，需要显式初始化vptr。下面的代码片段是在Shape的构造函数中设置vtbl和初始化vptr的示例：</p>
+<div class="highlight"><pre><span></span>#<span class="k">include</span> <span class="s2">&quot;</span><span class="s">Shape.h</span><span class="s2">&quot;</span>
+#<span class="k">include</span> <span class="o">&lt;</span><span class="nv">assert</span>.<span class="nv">h</span><span class="o">&gt;</span>
+
+<span class="nv">static</span> <span class="nv">int</span> <span class="nv">shape_area</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+<span class="nv">static</span> <span class="nv">void</span> <span class="nv">shape_draw</span><span class="ss">(</span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+
+<span class="nv">void</span> <span class="nv">Shape_init</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Shape</span> <span class="o">*</span> <span class="nv">self</span>, <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span> <span class="ss">)</span>
+{
+    <span class="nv">static</span> <span class="nv">struct</span> <span class="nv">ShapeVtbl</span> <span class="nv">const</span> <span class="nv">vtbl</span> <span class="o">=</span> { <span class="cm">/* vtbl of the Shpae class */</span>
+        <span class="o">&amp;</span><span class="nv">shape_area</span>,
+        <span class="o">&amp;</span><span class="nv">shape_draw</span>
+    }<span class="c1">;</span>
+
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">vptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">vtbl</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">x</span> <span class="o">=</span> <span class="nv">x</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">y</span> <span class="o">=</span> <span class="nv">y</span><span class="c1">;</span>
+}
+
+<span class="nv">static</span> <span class="nv">int</span> <span class="nv">shape_area</span><span class="ss">(</span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span>
+{
+    <span class="nv">assert</span><span class="ss">(</span><span class="mi">0</span><span class="ss">)</span><span class="c1">;</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="c1">;</span>
+}
+
+<span class="nv">static</span> <span class="nv">void</span> <span class="nv">shape_draw</span><span class="ss">(</span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span>
+{
+    <span class="nv">assert</span><span class="ss">(</span><span class="mi">0</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>vtbl通过指向实现相应操作的函数的指针初始化。在这种情况下，实现是shape_area()和shape_draw()。</p>
+<p>如果一个类不能提供它的一些虚函数的具体实现（因为这是一个抽象类），那么该函数实现应该在内部增加一条断言。这样，至少在运行时会知道调用了一个未实现(纯虚)的函数</p>
+<h3>继承vtbl并重写子类中的vptr</h3>
+<p>如前所述，如果一个超类包含vptr，它会自动地被所有继承他的派生子类继承，因此继承属性（通过“base”成员）会自动地用于多态类。</p>
+<p>然而，vptr通常需要重新指向特定子类的vtbl。同样，这种指针的重新指向必须发生在子类的构造函数中。例如，下面是Rectangle子类的构造函数：</p>
+<div class="highlight"><pre><span></span><span class="nv">void</span> <span class="nv">rectangle_init</span><span class="ss">(</span> <span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="o">*</span> <span class="nv">self</span>, <span class="nv">int</span> <span class="nv">x</span>, <span class="nv">int</span> <span class="nv">y</span>, <span class="nv">int</span> <span class="nv">width</span>, <span class="nv">int</span> <span class="nv">height</span> <span class="ss">)</span>
+{
+    <span class="nv">static</span> <span class="nv">struct</span> <span class="nv">ShapeVtbl</span> <span class="nv">const</span> <span class="nv">vtbl</span> <span class="o">=</span> {
+        <span class="o">&amp;</span><span class="nv">rectangle_area</span>,
+        <span class="o">&amp;</span><span class="nv">rectangle_draw</span>
+    }<span class="c1">;</span>
+
+    <span class="nv">Shape_init</span><span class="ss">(</span><span class="o">&amp;</span><span class="nv">self</span><span class="o">-&gt;</span><span class="nv">base</span>, <span class="nv">x</span>, <span class="nv">y</span><span class="ss">)</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">base</span>.<span class="nv">vptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">vtbl</span><span class="c1">;</span>
+
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">width</span> <span class="o">=</span> <span class="nv">width</span><span class="c1">;</span>
+    <span class="nv">self</span><span class="o">-&gt;</span><span class="nv">height</span> <span class="o">=</span> <span class="nv">height</span><span class="c1">;</span>
+}
+
+<span class="nv">static</span> <span class="nv">int</span> <span class="nv">rectangle_area</span><span class="ss">(</span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span> {
+    <span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self_</span> <span class="o">=</span> <span class="ss">(</span><span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="nv">const</span> <span class="o">*</span><span class="ss">)</span><span class="nv">self</span><span class="c1">; /* explicit downcast */</span>
+    <span class="k">return</span> <span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">width</span> <span class="o">*</span> <span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">height</span><span class="c1">;</span>
+
+}
+<span class="nv">static</span> <span class="nv">void</span> <span class="nv">rectangle_draw</span><span class="ss">(</span><span class="nv">struct</span> <span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span> {
+    <span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self_</span> <span class="o">=</span> <span class="ss">(</span><span class="nv">struct</span> <span class="nv">Rectangle</span> <span class="nv">const</span> <span class="o">*</span><span class="ss">)</span><span class="nv">self</span><span class="c1">; /* explicit downcast */</span>
+
+    <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">Rectangle_draw_(x=%d,y=%d,width=%d,height=%d)</span><span class="se">\n</span><span class="s2">&quot;</span>,<span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">base</span>.<span class="nv">x</span>, <span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">base</span>.<span class="nv">y</span>, <span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">width</span>, <span class="nv">self_</span><span class="o">-&gt;</span><span class="nv">height</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>需要注意的是，首先调用超类的构造函数(shape-init())来初始化从shape继承的self-&gt;base成员。此构造函数将vptr设置为指向Shape的vtbl。但是，vptr在下一个语句中被重写，在该语句中它被分配给Rectangle的vtbl。</p>
+<p>还需要注意的是，子类对虚函数的实现必须与超类中定义的签名精确匹配，以便适合vtbl。例如，rectangle_area()采用Shape*的指针"self"，而不是它自己的类Rectangle。然后，子类的实际实现必须执行“self”指针的显式向下转换。</p>
+<p><strong>Note</strong>
+为了简化讨论：Rectangle本身不引入任何新的虚函数。在这种情况下，Rectangle可以重新使用Shape的vtbl。但是，将实现扩展到一般情况也是相当简单的，在这种情况下，Rectangle将引入自己的矩形vtbl，从而继承shapevtbl。</p>
+<h3>虚调用(后期绑定)</h3>
+<p>有了虚表和虚指针的基础结构，虚调用(后期绑定)可以由如下代码实现：</p>
+<div class="highlight"><pre><span></span><span class="nv">int</span> <span class="nv">shape_area</span><span class="ss">(</span><span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span> 
+{ 
+    <span class="k">return</span> <span class="ss">(</span><span class="o">*</span><span class="nv">self</span><span class="o">-&gt;</span><span class="nv">vptr</span><span class="o">-&gt;</span><span class="nv">area</span><span class="ss">)(</span><span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>这个函数定义可以放在.c文件作用域中，但缺点是每次虚拟调用都会产生额外的函数调用开销。为了避免这种开销，如果编译器支持内嵌函数（C99标准），那么可以将定义放入头文件中，如下所示:</p>
+<div class="highlight"><pre><span></span><span class="nv">static</span> <span class="nv">inline</span> <span class="nv">int</span> <span class="nv">Shape_area</span><span class="ss">(</span><span class="nv">Shape</span> <span class="nv">const</span> <span class="o">*</span> <span class="nv">const</span> <span class="nv">self</span><span class="ss">)</span> 
+{ 
+    <span class="k">return</span> <span class="ss">(</span><span class="o">*</span><span class="nv">self</span><span class="o">-&gt;</span><span class="nv">vptr</span><span class="o">-&gt;</span><span class="nv">area</span><span class="ss">)(</span><span class="nv">self</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>或者，对于较旧的编译器(C89)，可以使用类似宏的函数，如下所示：</p>
+<div class="highlight"><pre><span></span><span class="o">#</span><span class="n">define</span> <span class="n">shape_area</span><span class="p">(</span><span class="n">self_</span><span class="p">)</span> <span class="p">((</span><span class="o">*</span><span class="p">(</span><span class="n">self_</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">vptr</span><span class="o">-&gt;</span><span class="n">area</span><span class="p">)((</span><span class="n">self_</span><span class="p">)))</span>
+</pre></div>
+
+
+<p>总结下来就是：</p>
+<p>虚调用的工作方式：查找相应的vtbl，然后通过指向函数的指针，从vtbl调用适当的实现。</p>
+<h3>虚函数调用实例</h3>
+<p>正如本节开始所提到的关于多态的描述，虚函数允许程序员编写非常干净的、独立于子类的特定实现细节的通用代码。此外，代码自动支持开放的子类的数量，这些子类可以在开发通用代码之后的任何时间添加。</p>
+<p><strong>main.c</strong></p>
+<div class="highlight"><pre><span></span><span class="n">struct</span> <span class="n">Rectangle</span> <span class="n">myRectangle</span><span class="p">;</span>
+<span class="n">rectangle_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">myRectangle</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+
+<span class="nb">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">myRectangle</span><span class="p">.</span><span class="n">base</span><span class="p">.</span><span class="n">vptr</span><span class="o">-&gt;</span><span class="n">area</span><span class="p">((</span><span class="n">struct</span> <span class="n">Shape</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">myRectangle</span><span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="ss">&quot;area is %d\n&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+</pre></div>
+
+
+<p><strong>输出打印</strong></p>
+<div class="highlight"><pre><span></span><span class="n">area</span> <span class="k">is</span> <span class="mi">200</span>
+</pre></div>
+
+
+<h2>总结</h2>
+<p>OOP(面向对象)是一种设计方法，而不是存在于特定的语言中或者说其并不是一种工具。本文描述了如何在可移植的ANSI-C中实现封装、（单）继承和多态性的概念。这些概念中的前两个(类和继承)被证明是非常简单的实现，不增加任何额外的成本或开销。</p>
+<p>多态性被证明是相当复杂的，如果你打算广泛使用这个特性，最好还是切换到C++。但是，如果利用C语言构建或使用库，那么OOP在C中的复杂性可以限制在库中，并且可以有效地对应用程序开发人员隐藏。</p>
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+<div id="aboutme">
+        <p>
+            <img width="100%" class="img-thumbnail" src="../../../images/xuyafei_2019-6-14.jpg"/>
+        </p>
+    <p>
+      <strong>About 挪威的森林</strong><br/>
+        I work at Beijing. I focus on tools and services for developer productivity, including build and testing.My other interests include programming language design, game development, and learning languages (the non-programming ones).
+    </p>
+</div><!-- Sidebar -->
+<section class="well well-sm">
+  <ul class="list-group list-group-flush">
+
+<!-- Sidebar/Social -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Social</span></h4>
+  <ul class="list-group" id="social">
+    <li class="list-group-item"><a href="http://twitter.com/DaanDebie"><i class="fa fa-twitter-square fa-lg"></i> twitter</a></li>
+    <li class="list-group-item"><a href="http://www.linkedin.com/in/danieldebie"><i class="fa fa-linkedin-square fa-lg"></i> linkedin</a></li>
+    <li class="list-group-item"><a href="http://github.com/DandyDev"><i class="fa fa-github-square fa-lg"></i> github</a></li>
+    <li class="list-group-item"><a href="http://stackoverflow.com/users/872397/dandydev"><i class="fa fa-stack-overflow fa-lg"></i> stackoverflow</a></li>
+  </ul>
+</li>
+<!-- End Sidebar/Social -->
+
+<!-- Sidebar/Authors -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Authors</span></h4>
+  <ul class="list-group" id="authors">
+    <li class="list-group-item">
+      <a href="../../../author/yafei-xu.html"><i class="fa fa-user fa-lg"></i>Yafei Xu</a>
+      (4)
+    </li>
+  </ul>
+</li>
+<!-- End Sidebar/Authors -->
+  </ul>
+</section>
+<!-- End Sidebar -->            </aside>
+        </div>
+    </div>
+</div>
+<!-- End Content Container -->
+
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2018 挪威的森林
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="../../../theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="../../../theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="../../../theme/js/respond.min.js"></script>
+
+    <script src="../../../static/js/custom.js"></script>
+
+
+
+</body>
+</html>
