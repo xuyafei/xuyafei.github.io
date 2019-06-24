@@ -202,7 +202,7 @@
 </li>
 </ol>
 <p>不能直接访问Shape的内部数据结构,虽然这里没有class这样的关键字，数据结构和相关操作是分开写的，看起来不太完美， 但确实是实现了封装。</p>
-<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/1.jpg"></center></p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Documents/blog/output/xuyafei.github.io/figure/1.jpg"></center></p>
 <h2>继承</h2>
 <p>继承是基于现有类定义新类以便重用和扩展代码的方法。 利用标准C语言的基本语法，将基类作为继承类的第一个结构体成员，可以轻松地在C中实现单继承。例如，相对于从头开始创建一个全新的Rectangle类，可以从已经存在的Shape类继承，并且在继承的类中增加Rectangele类独有的属性，如下代码所示：</p>
 <p><strong>Rectangle.h</strong></p>
@@ -245,9 +245,9 @@
 
 
 <p>从下图中可以看到Rectangle的内存模型</p>
-<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/2.jpg"></center></p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Documents/blog/output/xuyafei.github.io/figure/2.jpg"></center></p>
 <p>通过这种组合的方式，也算是实现了继承</p>
-<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/3.jpg"></center></p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Documents/blog/output/xuyafei.github.io/figure/3.jpg"></center></p>
 <h3>Note</h3>
 <p>如代码所示，要调用继承的函数，需要将第一个“self”参数显式地转换到超类(Shape *)，或者，可以避免转换并获取成员“base”的地址(&amp;r-&gt;base)。</p>
 <p>对于子类的实例对象使用“继承”函数没有额外的成本。换句话说，为子类的对象调用函数的成本与为超类的对象调用相同的函数一样昂贵。这种调用的开销也与C++非常相似。</p>
@@ -286,7 +286,7 @@
 
 
 <p>实际上，这样的接口非常有用，因为它允许程序员编写通用的代码处理基类及其子类的统一的接口。例如，给定这样的一个接口，能够编写通用函数来绘制屏幕上的所有形状或计算所有形状图形的面积。如下图所示</p>
-<p><center><img alt="avatar" src="/Users/xuyafei/Desktop/Polycom/4.jpg"></center></p>
+<p><center><img alt="avatar" src="/Users/xuyafei/Documents/blog/output/xuyafei.github.io/figure/4.jpg"></center></p>
 <h3>虚函数表(vtbl)和虚函数指针(vptr)</h3>
 <p>到目前为止，应该清楚的是，单个虚函数(如Shape_area()),可以在Shape的子类中具有许多不同的实现。例如，Shape的Rectangle子类与Square子类计算其图形面积的方式并不相同。这意味着在链接时无法解析虚函数的调用，就像在标准C语言中对普通函数调用所做的那样，因为要调用的函数的实际版本取决于对象的类型(矩形、圆形等)。因此，虚函数调用和实际实现之间的绑定必须在运行时进行，这称为后期绑定(与链接时绑定相反，链接时绑定也称为早期绑定)。</p>
 <p>实际上，所有C++编译器都是通过每个类的一个虚表(vtbl)和每个对象的虚指针(vptr)来实现后期绑定。这种方法也适用于标准C语言。</p>
