@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Objective-C __autoreleasing修饰符的应用(二级指针) - 挪威的森林</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="../../../articles/2018_12_13/二级指针 autoreleasing/">
+
+        <meta name="author" content="Yafei Xu" />
+        <meta name="keywords" content="autoreleasing，strong,weak" />
+        <meta name="description" content="autorleaseing和二级指针的结合使用" />
+
+        <meta property="og:site_name" content="挪威的森林" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Objective-C __autoreleasing修饰符的应用(二级指针)"/>
+        <meta property="og:url" content="../../../articles/2018_12_13/二级指针 autoreleasing/"/>
+        <meta property="og:description" content="autorleaseing和二级指针的结合使用"/>
+        <meta property="article:published_time" content="2018-12-13" />
+            <meta property="article:section" content="Objective-c" />
+            <meta property="article:tag" content="autoreleasing，strong" />
+            <meta property="article:tag" content="weak" />
+            <meta property="article:author" content="Yafei Xu" />
+
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="../../../theme/css/bootstrap.readable.min.css" type="text/css"/>
+    <link href="../../../theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="../../../theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../theme/css/style.css" type="text/css"/>
+        <link href="../../../static/css/custom.css" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="../../../" class="navbar-brand">
+挪威的森林            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                    <li><a href="/archives.html">archives</a></li>
+                         <li><a href="../../../pages/about/">
+                             Who am I?
+                          </a></li>
+                        <li >
+                            <a href="../../../category/c-language.html">C language</a>
+                        </li>
+                        <li class="active">
+                            <a href="../../../category/objective-c.html">Objective-c</a>
+                        </li>
+                        <li >
+                            <a href="../../../category/python.html">Python</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+
+<!-- Banner -->
+<!-- End Banner -->
+
+<!-- Content Container -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="../../../articles/2018_12_13/二级指针 autoreleasing/"
+                       rel="bookmark"
+                       title="Permalink to Objective-C __autoreleasing修饰符的应用(二级指针)">
+                        Objective-C __autoreleasing修饰符的应用(二级指针)
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2018-12-13T15:30:00-08:00"> Thu 13 December 2018</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="../../../tag/autoreleasingstrong.html">autoreleasing，strong</a>
+        /
+	<a href="../../../tag/weak.html">weak</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>概述</h2>
+<p>最近一段时间，一直在研读AFNetwork的源代码，作者不愧是objective-c这门语言的大神，编写的代码规范严谨，每一行代码都值得仔细推敲。写这篇小文章的缘由，也是在思考AFNetwork的某一行代码时，发散了一下思维，形成此文。</p>
+<div class="highlight"><pre><span></span><span class="nt">-</span> <span class="o">(</span><span class="nt">NSMutableURLRequest</span> <span class="o">*)</span><span class="nt">requestWithMethod</span><span class="o">:(</span><span class="nt">NSString</span> <span class="o">*)</span><span class="nt">method</span>
+                                 <span class="nt">URLString</span><span class="o">:(</span><span class="nt">NSString</span> <span class="o">*)</span><span class="nt">URLString</span>
+                                <span class="nt">parameters</span><span class="o">:(</span><span class="nt">nullable</span> <span class="nt">id</span><span class="o">)</span><span class="nt">parameters</span>
+                                     <span class="nt">error</span><span class="o">:(</span><span class="nt">NSError</span> <span class="o">*</span> <span class="nt">_Nullable</span> <span class="nt">__autoreleasing</span> <span class="o">*)</span><span class="nt">error</span><span class="o">;</span>
+</pre></div>
+
+
+<p>在AFNetwork中的AFURLRequestSerialization.h中，定义了如上函数，error类型的变量定义方式非常值得推敲：</p>
+<div class="highlight"><pre><span></span><span class="p">(</span><span class="n">NSError</span> <span class="o">*</span> <span class="n">_Nullable</span> <span class="n">__autoreleasing</span> <span class="o">*</span><span class="p">)</span><span class="n">error</span>
+</pre></div>
+
+
+<p>很明显，这是一个二级指针的变量类型，并且使用了__autoreleasing的修饰符，这篇文章从二级指针和__autoreleasing修饰符两方面展开。</p>
+<h2>二级指针</h2>
+<p>分析如下一段代码：</p>
+<div class="highlight"><pre><span></span><span class="nv">void</span> <span class="nv">testPointer</span><span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span><span class="nv">pointer_a</span> <span class="ss">)</span>
+{
+    <span class="nv">pointer_a</span> <span class="o">=</span> <span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span> <span class="ss">)</span><span class="nv">malloc</span><span class="ss">(</span> <span class="nv">sizeof</span><span class="ss">(</span> <span class="nv">int</span> <span class="ss">)</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="o">*</span><span class="nv">pointer_a</span> <span class="o">=</span> <span class="mi">5</span><span class="c1">;</span>
+}
+
+<span class="nv">int</span> <span class="o">*</span><span class="nv">a</span> <span class="o">=</span> <span class="nv">NULL</span><span class="c1">;</span>
+
+<span class="nv">testPointer</span><span class="ss">(</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+
+<span class="k">if</span><span class="ss">(</span><span class="nv">a</span> <span class="o">==</span> <span class="nv">NULL</span><span class="ss">)</span> {
+    <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">Error!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="ss">)</span><span class="c1">;</span>
+} <span class="k">else</span> {
+    <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">The number is %d</span><span class="se">\n</span><span class="s2">&quot;</span>, <span class="o">*</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>代码的打印结果为：</p>
+<div class="highlight"><pre><span></span><span class="n">Error</span><span class="o">!</span>
+</pre></div>
+
+
+<p>首先，这段代码会导致严重的内存泄漏。函数void testPointer( int *pointer_a )开辟一段存储空间，但是直到代码执行结束，也没有将这段内存释放，所以，这是一段非常糟糕的代码。接下来，分析打印结果。</p>
+<p>很多人都觉得，答应结果应该是：The number is 5，然而，函数执行完之后，a依然是一个空指针。下面就来详细分析：</p>
+<p>首先指出，在之前的代码段中，实参a和形参pointer_a分别存储在内存的不同的位置，这是理解本文的关键之处。</p>
+<p>如下图所示，指针a和调用testPointer()函数之后形参pointer_a在内存中的位置</p>
+<p><center><img src="/Users/xuyafei/Desktop/tmp/1.png"  width="60%" height="60%"></center></p>
+<p>函数testPointer()执行完之后，实参a和形参pointer_a在内存的实际指向如下图所示
+<center><img src="/Users/xuyafei/Desktop/tmp/2.png"  width="60%" height="60%"></center></p>
+<p>从图中可以看到，pointer_a经过动态内存分配之后，实际指向了新的位置，而且这个新的位置存储的值为5，实参和形参指针分别指向了不同的位置，这也就不难解释上述代码段打印的结果。</p>
+<p>将函数testPointer()换一种实现方式：</p>
+<div class="highlight"><pre><span></span><span class="nv">int</span> <span class="o">*</span> <span class="nv">testPointer</span><span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span><span class="nv">pointer_a</span> <span class="ss">)</span>
+{
+    <span class="nv">pointer_a</span> <span class="o">=</span> <span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span> <span class="ss">)</span><span class="nv">malloc</span><span class="ss">(</span> <span class="nv">sizeof</span><span class="ss">(</span> <span class="nv">int</span> <span class="ss">)</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="o">*</span><span class="nv">pointer_a</span> <span class="o">=</span> <span class="mi">5</span><span class="c1">;</span>
+
+    <span class="k">return</span> <span class="nv">pointer_a</span><span class="c1">;</span>
+}
+<span class="nv">a</span> <span class="o">=</span> <span class="nv">testPointer</span><span class="ss">(</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+
+<span class="k">if</span><span class="ss">(</span><span class="nv">a</span> <span class="o">==</span> <span class="nv">NULL</span><span class="ss">)</span> {
+    <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">Error!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="ss">)</span><span class="c1">;</span>
+} <span class="k">else</span> {
+   <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">The number is %d</span><span class="se">\n</span><span class="s2">&quot;</span>, <span class="o">*</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+   <span class="nv">free</span><span class="ss">(</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>代码的打印结果为：</p>
+<div class="highlight"><pre><span></span><span class="n">The</span> <span class="nb">number</span> <span class="k">is</span> <span class="mi">5</span>
+</pre></div>
+
+
+<p>首先还是要强调一点，实例代码依然有着内存泄漏的风险，代码并不合理，只是为了说明问题。由于testPointer()的返回值是一个指针类型，赋值给指针a，所以才会得到“The number is 5” 这句打印结果。</p>
+<p>代码很好理解，也很好懂，初级程序员也能读懂这句代码，之所以还要浪费篇幅，是因为本文降到autorelease时，还会用到此实例代码。</p>
+<p>继续改写testPointer()函数：</p>
+<div class="highlight"><pre><span></span><span class="nv">void</span> <span class="nv">testPointer</span><span class="ss">(</span> <span class="nv">int</span> <span class="o">**</span><span class="nv">pointer_a</span> <span class="ss">)</span>
+{
+    <span class="o">*</span><span class="nv">pointer_a</span> <span class="o">=</span> <span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span> <span class="ss">)</span><span class="nv">malloc</span><span class="ss">(</span> <span class="nv">sizeof</span><span class="ss">(</span> <span class="nv">int</span> <span class="ss">)</span> <span class="ss">)</span><span class="c1">;</span>
+    <span class="o">**</span><span class="nv">pointer_a</span> <span class="o">=</span> <span class="mi">5</span><span class="c1">;</span>
+}
+
+<span class="nv">int</span> <span class="o">*</span><span class="nv">a</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nv">i</span><span class="c1">;</span>
+<span class="nv">testPointer</span><span class="ss">(</span> <span class="o">&amp;</span><span class="nv">a</span> <span class="ss">)</span><span class="c1">;</span>
+
+<span class="k">if</span><span class="ss">(</span> <span class="nv">a</span> <span class="o">==</span> <span class="nv">NULL</span> <span class="ss">)</span> {
+    <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">Error!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="ss">)</span><span class="c1">;</span>
+} <span class="k">else</span> {
+   <span class="nv">printf</span><span class="ss">(</span><span class="s2">&quot;</span><span class="s">The number is %d</span><span class="se">\n</span><span class="s2">&quot;</span>, <span class="o">*</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+   <span class="nv">free</span><span class="ss">(</span><span class="nv">a</span><span class="ss">)</span><span class="c1">;</span>
+}
+</pre></div>
+
+
+<p>打印结果：</p>
+<div class="highlight"><pre><span></span><span class="n">The</span> <span class="nb">number</span> <span class="k">is</span> <span class="mi">5</span>
+</pre></div>
+
+
+<p>这一部分算是本文的第一个重头戏，考察对于C语言二级指针的理解，调用testPointer()函数时，实参是指针a的地址，也就是指针的指针，pointer_a作为指针a的指针，其值就是指针a的地址。</p>
+<p>对pointer_a进行解引用，得到的便是a。这句代码</p>
+<div class="highlight"><pre><span></span><span class="o">*</span><span class="n">pointer_a</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span> <span class="o">*</span> <span class="p">)</span><span class="n">malloc</span><span class="p">(</span> <span class="n">sizeof</span><span class="p">(</span> <span class="nb">int</span> <span class="p">)</span> <span class="p">);</span>
+</pre></div>
+
+
+<p>也可以理解为</p>
+<div class="highlight"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span> <span class="o">*</span> <span class="p">)</span><span class="n">malloc</span><span class="p">(</span> <span class="n">sizeof</span><span class="p">(</span> <span class="nb">int</span> <span class="p">)</span> <span class="p">);</span>
+</pre></div>
+
+
+<p>所以就不难得到此打印结果。如下图，可以更好的理解实例代码以及C语言的二级指针</p>
+<p><center><img src="/Users/xuyafei/Desktop/tmp/3.png"  width="60%" height="60%"></center></p>
+<p>如果所示，在调用testPointer()函数之后，*pointer_a初始化之前，指针的指向关系，从图中可以很明显的得到以下结论：</p>
+<div class="highlight"><pre><span></span><span class="o">*</span><span class="n">pointer_a</span> <span class="o">==</span> <span class="n">a</span>
+</pre></div>
+
+
+<p>调用初始化语句，分配内存之后：
+<center><img src="/Users/xuyafei/Desktop/tmp/4.png"  width="60%" height="60%"></center></p>
+<p>从上图可以充分理解C语言二级指针的妙用，也可以得到如下结论：</p>
+<div class="highlight"><pre><span></span><span class="o">**</span><span class="n">pointer_a</span> <span class="o">==</span> <span class="o">*</span><span class="n">a</span> <span class="o">==</span> <span class="mi">5</span>
+</pre></div>
+
+
+<h2>__autoreleasing修饰符</h2>
+<p>autorelease在Objective-C中是一个非常大的概念，需要一整篇文章去研究和讲解，这本文中，只是针对特定的场景进行适度的分析，之后我会专门写一篇文章来讲解__autoreleasing修饰符。</p>
+<p>这里是一个非可显示地使用__autoreleasing修饰符的例子，如同id obj和id __strong obj完全一样，id的指针id <em>obj使用的是id __autorereleasing </em>obj，同样地，在对象指针的指针便成为了NSObject * __autoreleasing *obj。</p>
+<p>这里值得思考的一点是，为什么__autoreleasing修饰符的位置是在两个指针之间，首先，声明带有所有权修饰符的对象指针的正确语法是：</p>
+<div class="highlight"><pre><span></span><span class="n">NSError</span> <span class="o">*</span> <span class="n">__qualifier</span> <span class="n">someError</span><span class="p">;</span>
+</pre></div>
+
+
+<p>当然，现代的编译器足够的聪明和智能，会原谅这种错误的语法：</p>
+<div class="highlight"><pre><span></span><span class="n">__qualifier</span> <span class="n">NSError</span> <span class="o">*</span><span class="n">someError</span><span class="p">;</span>
+</pre></div>
+
+
+<p>在Objective-C中，二级指针没有ARC(自动管理内存)的内存管理修饰符，这是因为指向内存地址的指针是指向基元类型的指针，而不是指向对象的指针。当声明一个二级指针时，ARC并不知道二级指针的内存管理方式，所以，在二级指针的情况下，被声明为如下的形式：</p>
+<div class="highlight"><pre><span></span><span class="n">SomeClass</span> <span class="o">*</span> <span class="n">__qualifier</span> <span class="o">*</span><span class="n">someVariable</span><span class="p">;</span>
+</pre></div>
+
+
+<p>可以用人类理解的方式去描述这句代码：指向一个__autoreleasing SomeClass对象指针的指针。</p>
+<p>用一个更简单的函数去讨论本文的主题：</p>
+<div class="highlight"><pre><span></span><span class="nt">-</span> <span class="o">(</span><span class="nt">BOOL</span><span class="o">)</span> <span class="nt">performOperationWithError</span><span class="o">:(</span><span class="nt">NSError</span> <span class="o">**)</span><span class="nt">error</span><span class="o">;</span>
+</pre></div>
+
+
+<p>如同前面的讲述。id的指针或者指向对象的指针的指针会默认加上__autoreleasing修饰符，所以等同于以下代码。</p>
+<div class="highlight"><pre><span></span><span class="nt">-</span> <span class="o">(</span><span class="nt">BOOL</span><span class="o">)</span> <span class="nt">performOperationWithError</span><span class="o">:(</span><span class="nt">NSError</span> <span class="o">*</span> <span class="nt">__autoreleasing</span> <span class="o">*)</span><span class="nt">error</span><span class="o">;</span>
+</pre></div>
+
+
+<p>参数中持有NSError二级指针的方法，需要生产NSError类对象，但是必须也要符合内存管理的思考方式。</p>
+<p>作为alloc/new/copy/mutableCopy方法返回的值取得的对象是自己生成并持有的，其他情况下便是取得非自己生产并持有的对象，因此，使用附有__autoreleasing修饰符的变量作为对象取得参数，与除alloc/new/copy/mutableCopy外其他方法的返回值取得的对象完全一样，都会注册到autoreleasepool,并取得非自己生成并持有的对象。</p>
+<p>比如，performOperationWithError方法的源代码应该就是下面这样：</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span> <span class="nf">performOperationWithError:</span><span class="p">(</span><span class="bp">NSError</span> <span class="o">*</span> <span class="k">__autoreleasing</span> <span class="o">*</span><span class="p">)</span><span class="nv">error</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">error</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSError</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initwithDomain</span><span class="p">:</span><span class="n">MyAppDomain</span> <span class="nl">code</span><span class="p">:</span><span class="n">errorCode</span> <span class="nl">userinfo</span><span class="p">:</span><span class="nb">nil</span><span class="p">];</span>
+
+    <span class="k">return</span> <span class="nb">NO</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>因为声明为NSError * __autoreleasing * 类型的error作为*error被赋值，所以能够返回注册到autoreleasepool中的对象。文章写到这里，就可以思考一下，如果函数声明为如下方式，会发生什么情况：</p>
+<div class="highlight"><pre><span></span><span class="nt">-</span> <span class="o">(</span><span class="nt">BOOL</span><span class="o">)</span> <span class="nt">performOperationWithError</span><span class="o">:(</span><span class="nt">NSError</span> <span class="o">*</span> <span class="nt">__strong</span> <span class="o">*)</span><span class="nt">error</span><span class="o">;</span>
+</pre></div>
+
+
+<p>我最初在思考这个问题的时候，和很多网上的文章一样，认为由于strong修饰符的作用，当函数作用域结束之后，会被自动释放，error值必定为空，虽然没有之前C语言二级指针内存泄露的风险，但是却得不到想要的结果。还对自己的思考沾沾自喜，认为自己的思考方式是对的，但是实际跑了一遍程序之后，发现使用(NSError * __strong *)error也可以得到想要的结果，在这里，严肃的批评一下自己和网上的一些技术作者，还是要更深入的思考和实践，不要做误人子弟的事情。</p>
+<p>还而且明确一点的是，当我们调用含有</p>
+<div class="highlight"><pre><span></span><span class="p">(</span><span class="n">NSError</span> <span class="o">*</span> <span class="n">_Nullable</span> <span class="n">__autoreleasing</span> <span class="o">*</span><span class="p">)</span><span class="n">error</span>
+</pre></div>
+
+
+<p>这种参数类型的函数是，编译器会帮我们做进一步的优化：</p>
+<div class="highlight"><pre><span></span><span class="bp">NSError</span> <span class="o">*</span><span class="k">__strong</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+<span class="bp">NSError</span> <span class="k">__autoreleasing</span> <span class="o">*</span><span class="n">tempError</span> <span class="o">=</span> <span class="n">error</span><span class="p">;</span>
+<span class="p">[</span><span class="nb">self</span> <span class="nl">handleResponseCode</span><span class="p">:</span><span class="mi">0</span> <span class="nl">error</span><span class="p">:</span><span class="o">&amp;</span> <span class="n">tempError</span><span class="p">];</span>
+<span class="n">error</span> <span class="o">=</span> <span class="n">tempError</span><span class="p">;</span>
+</pre></div>
+
+
+<p>通过查阅资料以及写了几段代码来解释上面的这个问题，__strong修饰符到底是否可行，代码如下：</p>
+<div class="highlight"><pre><span></span><span class="k">@interface</span> <span class="nc">Fruit</span> : <span class="bp">NSObject</span>
+
+<span class="k">@property</span> <span class="p">(</span><span class="k">nonatomic</span><span class="p">,</span> <span class="k">copy</span><span class="p">)</span> <span class="bp">NSString</span> <span class="o">*</span><span class="n">fruit</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">initWith:</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="p">)</span><span class="nv">fruitName</span><span class="p">;</span>
+
+<span class="k">@end</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="cp">#import &quot;Fruit.h&quot;</span>
+
+<span class="k">@implementation</span> <span class="nc">Fruit</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nf">initWith:</span><span class="p">(</span><span class="bp">NSString</span> <span class="o">*</span><span class="p">)</span><span class="nv">fruitName</span> <span class="p">{</span>
+    <span class="nb">self</span> <span class="o">=</span> <span class="p">[</span><span class="nb">super</span> <span class="n">init</span><span class="p">];</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">self</span><span class="p">.</span><span class="n">fruit</span> <span class="o">=</span> <span class="n">fruitName</span><span class="p">;</span>
+        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;&gt;&gt;&gt; %p: init&quot;</span><span class="p">,</span><span class="nb">self</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">self</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">dealloc</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;&gt;&gt;&gt; %p: dealloc&quot;</span><span class="p">,</span> <span class="nb">self</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">@end</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="k">@interface</span> <span class="nc">Farmer</span> : <span class="bp">NSObject</span>
+
+<span class="k">@property</span> <span class="p">(</span><span class="k">nonatomic</span><span class="p">,</span> <span class="k">strong</span><span class="p">)</span> <span class="n">Fruit</span> <span class="o">*</span><span class="n">fruitInstance</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">demo1</span><span class="p">;</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">indirect:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">**</span><span class="p">)</span><span class="nv">fruitRef</span><span class="p">;</span>                  <span class="c1">// __autoreleasing inferred</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">indirectWrapper:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">**</span><span class="p">)</span><span class="nv">fruitRef</span><span class="p">;</span>
+
+<span class="k">@end</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="k">@implementation</span> <span class="nc">Farmer</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">indirect:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">**</span><span class="p">)</span><span class="nv">fruitRef</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">fruitRef</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;banana&quot;</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">indirectWrapper:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">**</span><span class="p">)</span><span class="nv">fruitRef</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;indirect: passed reference %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="n">fruitRef</span><span class="p">,</span> <span class="o">*</span><span class="n">fruitRef</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">fruitRef</span><span class="p">).</span><span class="n">fruit</span><span class="p">,</span>  <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="o">*</span><span class="n">fruitRef</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">indirect</span><span class="p">:</span><span class="n">fruitRef</span><span class="p">];</span>
+
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;indirect: returned&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">demo1</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Start demo1&quot;</span><span class="p">);</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Strong local passed by autoreleasing reference&quot;</span><span class="p">);</span>
+    <span class="n">Fruit</span> <span class="o">*</span><span class="n">local</span><span class="p">;</span>                                   <span class="c1">// __strong inferred</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;apple&quot;</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;local: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">local</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">indirectWrapper</span><span class="p">:</span><span class="o">&amp;</span><span class="n">local</span><span class="p">];</span>
+
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;local: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">local</span><span class="p">)));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="k">@autoreleasepool</span> <span class="p">{</span>
+        <span class="c1">// insert code here...</span>
+        <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Hello, World!&quot;</span><span class="p">);</span>
+        <span class="n">Farmer</span> <span class="o">*</span><span class="n">farmer</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Farmer</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+        <span class="p">[</span><span class="n">farmer</span> <span class="n">demo1</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>以上代码非常的简单，不需要多余的解释，作为程序员，看代码即可。现在着重分析程序的打印结果：</p>
+<div class="highlight"><pre><span></span><span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">Start</span> <span class="nv">demo1</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">Strong</span> <span class="nv">local</span> <span class="nv">passed</span> <span class="nv">by</span> <span class="nv">autoreleasing</span> <span class="nv">reference</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100507a10</span>: <span class="nv">init</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">local</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100507a10</span> <span class="o">-</span> <span class="nv">apple</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">indirect</span>: <span class="nv">passed</span> <span class="nv">reference</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e0</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100507a10</span> <span class="o">-</span> <span class="nv">apple</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">init</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">autorelease</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">indirect</span>: <span class="nv">returned</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">retain</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100507a10</span>: <span class="nv">release</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100507a10</span>: <span class="nv">dealloc</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">local</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x1006251a0</span> <span class="o">-</span> <span class="nv">banana</span>, <span class="nv">owners</span> <span class="mi">2</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">release</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">Flush</span> <span class="nv">demo1</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">release</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">dealloc</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="k">End</span> <span class="nv">demo1</span>
+</pre></div>
+
+
+<p>首先分析第一部分的打印输出</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="k">Start</span> <span class="n">demo1</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="n">Strong</span> <span class="k">local</span> <span class="n">passed</span> <span class="k">by</span> <span class="n">autoreleasing</span> <span class="n">reference</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x100507a10</span><span class="p">:</span> <span class="n">init</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="k">local</span><span class="p">:</span> <span class="n">addr</span> <span class="mi">0</span><span class="n">x7ffeefbff4e8</span><span class="p">,</span> <span class="k">contains</span> <span class="mi">0</span><span class="n">x100507a10</span> <span class="o">-</span> <span class="n">apple</span><span class="p">,</span> <span class="n">owners</span> <span class="mi">1</span>
+</pre></div>
+
+
+<p>从代码中也可以看到，local = [[Fruit alloc] initWith:@"apple"];创建了地址为0x100507a10的对象，存储在变量local中，local的地址为0x7ffeefbff4e8，这个对象只有一个持有者(local)</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="n">indirect</span><span class="p">:</span> <span class="n">passed</span> <span class="n">reference</span> <span class="mi">0</span><span class="n">x7ffeefbff4e0</span><span class="p">,</span> <span class="k">contains</span> <span class="mi">0</span><span class="n">x100507a10</span> <span class="o">-</span> <span class="n">apple</span><span class="p">,</span> <span class="n">owners</span> <span class="mi">1</span>
+</pre></div>
+
+
+<p>这里涉及到一个隐藏变量的操作，我们之前提到过，有一步这样的操作：</p>
+<div class="highlight"><pre><span></span><span class="n">Fruit</span> <span class="k">__autoreleasing</span> <span class="o">*</span><span class="n">tempLocal</span> <span class="o">=</span> <span class="n">local</span><span class="p">;</span>
+<span class="p">[</span><span class="nb">self</span> <span class="nl">indirectWrapper</span><span class="p">:</span><span class="o">&amp;</span> <span class="n">tempLocal</span><span class="p">];</span>
+</pre></div>
+
+
+<p>所以真正传入的参数，是ARC创建了一个临时的__autoreleasing变量，变量指针的地址为0x7ffeefbff4e0，并且将对象0x100507a10拷贝到tempLocal中。</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x1006251a0</span><span class="p">:</span> <span class="n">init</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x1006251a0</span><span class="p">:</span> <span class="n">autorelease</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="n">indirect</span><span class="p">:</span> <span class="n">returned</span>
+</pre></div>
+
+
+<p>在<code>indirect:</code>函数中，一个新的对象被创建并在赋值给变量前加入到了自动释放池中，因为传递的引用的对象指向了一个__autoreleasing变量。</p>
+<p>注意：ARC不需要对二级指针变量（0x7ffeefbff4e8）的内容（0x100507a10）执行任何操作，因为它是自动释放的，因此不必要这么做。也就是说，“autorelease所有权”是指分配的变量必须已经有效地放入自动释放池中。也将看到，当创建隐藏变量tempLocal时，ARC实际上并没有retain这个对象并且把这个对象放入自动释放池中-它不需要这样做，因为编译器知道知道它正在管理的对象有一个强引用（local）。</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x1006251a0</span><span class="p">:</span> <span class="n">retain</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x100507a10</span><span class="p">:</span> <span class="n">release</span>
+<span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x100507a10</span><span class="p">:</span> <span class="n">dealloc</span>
+</pre></div>
+
+
+<p>这些操作是将隐藏变量中的值复制到变量local（writeback 是指调用并且写回）。release/dealloc用于local中旧的强引用，retain用于对临时变量tempLocal对象的引用的（tempLocal在函数indirect：中）。</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="k">local</span><span class="p">:</span> <span class="n">addr</span> <span class="mi">0</span><span class="n">x7ffeefbff4e8</span><span class="p">,</span> <span class="k">contains</span> <span class="mi">0</span><span class="n">x1006251a0</span> <span class="o">-</span> <span class="n">banana</span><span class="p">,</span> <span class="n">owners</span> <span class="mi">2</span>
+</pre></div>
+
+
+<p>经过函数indirectWrapper的调用之后，新的对象有两个持有者，一个是变量local,另外一个在自动释放池中。</p>
+<div class="highlight"><pre><span></span><span class="n">Autorelease</span><span class="p">[</span><span class="mi">4766</span><span class="p">:</span><span class="mi">1800775</span><span class="p">]</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="n">x1006251a0</span><span class="p">:</span> <span class="n">release</span>
+</pre></div>
+
+
+<p>demo1调用过程结束之后，ARC会自动释放对象local。</p>
+<div class="highlight"><pre><span></span><span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="nv">Flush</span> <span class="nv">demo1</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">release</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1006251a0</span>: <span class="nv">dealloc</span>
+<span class="nv">Autorelease</span>[<span class="mi">4766</span>:<span class="mi">1800775</span>] <span class="k">End</span> <span class="nv">demo1</span>
+</pre></div>
+
+
+<p>demo1调用结束之后，@autoreleasepool会释放所有在自动释放池中的对象，此时0x1006251a0的持有者为0，所以会被废弃。</p>
+<p>demo1谈论的是传递函数的内部变量，默认添加__autoreleasing修饰符，但是如果函数参数传递的是类的属性，这种机制就不再适用了。这种情况下有两种解决方式：</p>
+<p>1.拷贝实例变量到函数的内部变量
+2.添加一些属性描述符</p>
+<p>为了说明第二种方法，我们向类Farmer添加另外一个函数strongIndirect：其参数指定需要一个强变量的引用：</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">strongIndirect:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">*</span> <span class="k">__strong</span> <span class="o">*</span><span class="p">)</span><span class="nv">byRef</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">byRef</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;plum&quot;</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">strongIndirectWrapper:</span><span class="p">(</span><span class="n">Fruit</span> <span class="o">*</span> <span class="k">__strong</span> <span class="o">*</span><span class="p">)</span><span class="nv">byRef</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;strongIndirect: passed reference %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="n">byRef</span><span class="p">,</span> <span class="o">*</span><span class="n">byRef</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">byRef</span><span class="p">).</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="o">*</span><span class="n">byRef</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">strongIndirect</span><span class="p">:</span><span class="n">byRef</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;strongIndirect: returned&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>并且用函数demo2进一步的说明这个问题，传递的变量是Farmer类的属性变量：</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">demo2</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Strong instance passed by strong reference&quot;</span><span class="p">);</span>
+    <span class="n">_fruitInstance</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;orange&quot;</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;instance: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">_fruitInstance</span><span class="p">,</span> <span class="n">_fruitInstance</span><span class="p">,</span> <span class="n">_fruitInstance</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">_fruitInstance</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">strongIndirectWrapper</span><span class="p">:</span><span class="o">&amp;</span><span class="n">_fruitInstance</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;instance: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">_fruitInstance</span><span class="p">,</span> <span class="n">_fruitInstance</span><span class="p">,</span> <span class="n">_fruitInstance</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">_fruitInstance</span><span class="p">)));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>打印结果如下所示：</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">Start</span> <span class="nv">demo2</span>
+<span class="mi">2</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">Strong</span> <span class="nv">instance</span> <span class="nv">passed</span> <span class="nv">by</span> <span class="nv">strong</span> <span class="nv">reference</span>
+<span class="mi">3</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100602ad0</span>: <span class="nv">init</span>
+<span class="mi">4</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">instance</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x100606eb8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100602ad0</span> <span class="o">-</span> <span class="nv">orange</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">5</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">strongIndirect</span>: <span class="nv">passed</span> <span class="nv">reference</span> <span class="mi">0</span><span class="nv">x100606eb8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100602ad0</span> <span class="o">-</span> <span class="nv">orange</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">6</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1030010c0</span>: <span class="nv">init</span>
+<span class="mi">7</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100176f30</span>: <span class="nv">release</span>
+<span class="mi">8</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100176f30</span>: <span class="nv">dealloc</span>
+<span class="mi">9</span>  <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">strongIndirect</span>: <span class="nv">returned</span>
+<span class="mi">10</span> <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">instance</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x100606eb8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x1030010c0</span> <span class="o">-</span> <span class="nv">plum</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">11</span> <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="nv">Flush</span> <span class="nv">demo2</span>
+<span class="mi">12</span> <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x1030010c0</span>: <span class="nv">dealloc</span>
+<span class="mi">13</span> <span class="nv">Autorelease</span>[<span class="mi">15676</span>:<span class="mi">2446890</span>] <span class="k">End</span> <span class="nv">demo2</span>
+</pre></div>
+
+
+<p>demo1的打印输出要比demo2少，是由以下两个原因导致的：</p>
+<ol>
+<li>因为我们将一个强变量（实例）传递给一个方法（strongIndirect :)，它希望引用一个强变量，所以ARC不需要使用隐藏变量 - 上面第4行和第5行中的变量是相同的(0x100147518)。</li>
+<li>由于ARC知道strongIndirect中引用的变量是强引用，因此不需要在strongIndirect中将变量存储到自动释放池中，然后在调用之后将其写回 - ARC只执行标准的强引用赋值，第6-8行，并且没有任何变量的自动释放（第11和12行之间）。</li>
+</ol>
+<p>那么，问题又来了，demo2中的strongIndirectWrapper对demo1中的局部变量local适用吗？</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">demo3</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Strong local passed by strong reference&quot;</span><span class="p">);</span>
+    <span class="n">Fruit</span> <span class="o">*</span><span class="n">local</span><span class="p">;</span>                                   <span class="c1">// __strong inferred</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;apple&quot;</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;local: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">local</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">strongIndirectWrapper</span><span class="p">:</span><span class="o">&amp;</span><span class="n">local</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;local: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">,</span> <span class="n">local</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">local</span><span class="p">)));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>demo3的打印输出入下图所示：</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">Start</span> <span class="nv">demo3</span>
+<span class="mi">2</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">Strong</span> <span class="nv">local</span> <span class="nv">passed</span> <span class="nv">by</span> <span class="nv">strong</span> <span class="nv">reference</span>
+<span class="mi">3</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x10071b410</span>: <span class="nv">init</span>
+<span class="mi">4</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">local</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x10071b410</span> <span class="o">-</span> <span class="nv">apple</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">5</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">strongIndirect</span>: <span class="nv">passed</span> <span class="nv">reference</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x10071b410</span> <span class="o">-</span> <span class="nv">apple</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">6</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100506ad0</span>: <span class="nv">init</span>
+<span class="mi">7</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x10071b410</span>: <span class="nv">release</span>
+<span class="mi">8</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x10071b410</span>: <span class="nv">dealloc</span>
+<span class="mi">9</span>  <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">strongIndirect</span>: <span class="nv">returned</span>
+<span class="mi">10</span> <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">local</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7ffeefbff4e8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100506ad0</span> <span class="o">-</span> <span class="nv">plum</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">11</span> <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d20</span>: <span class="nv">release</span>
+<span class="mi">12</span> <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100506ad0</span>: <span class="nv">dealloc</span>
+<span class="mi">13</span> <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="nv">Flush</span> <span class="nv">demo3</span>
+<span class="mi">14</span> <span class="nv">Autorelease</span>[<span class="mi">15985</span>:<span class="mi">2549888</span>] <span class="k">End</span> <span class="nv">demo3</span>
+</pre></div>
+
+
+<p>demo3的输出与前面的例子几乎相同，只是有两个细微的差别：</p>
+<ol>
+<li>堆栈上的local地址被传递（0x7ffeefbff4e8），第4行和第5行。</li>
+<li>因为变量存储在变量local中，新对象由ARC负责清理和释放，第11和12行清理。</li>
+</ol>
+<p>问题又来了，为什么在demo1中，ARC默认用__autoreleasing描述符而不是__strong描述符，其中一个原因是并不是每一个变量都是__strong类型的，有可能是__weak描述的，最后一个demo如下所示：</p>
+<div class="highlight"><pre><span></span><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">demo4</span> <span class="p">{</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Weak instance passed by autoreleasing reference&quot;</span><span class="p">);</span>                                  <span class="c1">// __strong inferred</span>
+    <span class="n">_fruitInstance</span> <span class="o">=</span> <span class="p">[[</span><span class="n">Fruit</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWith</span><span class="p">:</span><span class="s">@&quot;peach&quot;</span><span class="p">];</span>
+    <span class="n">Fruit</span> <span class="k">__weak</span> <span class="o">*</span><span class="n">weakLocal</span> <span class="o">=</span> <span class="n">_fruitInstance</span><span class="p">;</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;weakLocal: addr %p, contains %p - %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">weakLocal</span><span class="p">,</span> <span class="n">weakLocal</span><span class="p">,</span> <span class="n">weakLocal</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">weakLocal</span><span class="p">)));</span>
+    <span class="p">[</span><span class="nb">self</span> <span class="nl">indirectWrapper</span><span class="p">:</span><span class="o">&amp;</span><span class="n">weakLocal</span><span class="p">];</span>
+    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;weakLocal: addr %p, contains %p -, %@, owners %lu&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">weakLocal</span><span class="p">,</span> <span class="n">weakLocal</span><span class="p">,</span> <span class="n">weakLocal</span><span class="p">.</span><span class="n">fruit</span><span class="p">,</span> <span class="n">CFGetRetainCount</span><span class="p">((</span><span class="k">__bridge</span>  <span class="n">CFTypeRef</span><span class="p">)(</span><span class="n">weakLocal</span><span class="p">)));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>demo4打印输出如下图所示：</p>
+<div class="highlight"><pre><span></span><span class="mi">1</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">Start</span> <span class="nv">demo4</span>
+<span class="mi">2</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">Weak</span> <span class="nv">instance</span> <span class="nv">passed</span> <span class="nv">by</span> <span class="nv">autoreleasing</span> <span class="nv">reference</span>
+<span class="mi">3</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d20</span>: <span class="nv">init</span>
+<span class="mi">4</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d10</span>: <span class="nv">release</span>
+<span class="mi">5</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d10</span>: <span class="nv">dealloc</span>
+<span class="mi">6</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">weakLocal</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7fff5fbfedd0</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100427d20</span> <span class="o">-</span> <span class="nv">peach</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">7</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d20</span>: <span class="nv">autorelease</span>
+<span class="mi">8</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">indirect</span>: <span class="nv">passed</span> <span class="nv">reference</span> <span class="mi">0</span><span class="nv">x7fff5fbfedc8</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100427d20</span> <span class="o">-</span> <span class="nv">peach</span>, <span class="nv">owners</span> <span class="mi">2</span>
+<span class="mi">9</span>  <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100429040</span>: <span class="nv">init</span>
+<span class="mi">10</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100429040</span>: <span class="nv">autorelease</span>
+<span class="mi">11</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">indirect</span>: <span class="nv">returned</span>
+<span class="mi">12</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">weakLocal</span>: <span class="nv">addr</span> <span class="mi">0</span><span class="nv">x7fff5fbfedd0</span>, <span class="nv">contains</span> <span class="mi">0</span><span class="nv">x100429040</span> <span class="o">-</span>, <span class="nv">banana</span>, <span class="nv">owners</span> <span class="mi">1</span>
+<span class="mi">13</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="nv">Flush</span> <span class="nv">demo4</span>
+<span class="mi">14</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100429040</span>: <span class="nv">release</span>
+<span class="mi">15</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100429040</span>: <span class="nv">dealloc</span>
+<span class="mi">16</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="o">&gt;&gt;&gt;</span> <span class="mi">0</span><span class="nv">x100427d20</span>: <span class="nv">release</span>
+<span class="mi">17</span> <span class="nv">Autorelease</span>[<span class="mi">16079</span>:<span class="mi">2611118</span>] <span class="k">End</span> <span class="nv">demo4</span>
+</pre></div>
+
+
+<ol>
+<li>第3-5行只是设置实例 - 创建一个新值并释放旧值 - 真正的变量从第6行开始</li>
+<li>ARC同样会为__weak类型的局部变量（第6行，0x7fff5fbfedd0）使用一个隐藏变量（第8行，0x7fff5fbfedc8）</li>
+<li>ARC没有像demo1那样上面那样对其赋值之后进行了retain操作，只是将其放到了自动释放池中，可以在第7行看到自动释放池操作的调用，第8行可以看到的所有权持有的数量显示已经发生了变化。</li>
+<li>因为两个autoreleases的操作，所以当自动释放池销毁时必须有两个相应的release操作（第14行和第16行） - 只有一个相应的dealloc（第15行），因为另一个对象（0x100427d20）被实例引用，ARC清除它时，实例就消失了。</li>
+</ol>
+<h2>总结</h2>
+<ol>
+<li>如果没有添加任何附加属性描述符，ARC将通过二级指针（推断自动释放）作为参数传递local变量（推断为强引用的变量）。</li>
+<li>这是由ARC使用pass-by-writeback实现的，只有在遵循“out”参数模式时才有效。如果你希望存储传递的参数，你需要自己完成更多工作。</li>
+<li>如果你希望通过引用传递实例变量，则需要将它们复制到本地或使用__strong接收参数类型赋值。</li>
+<li>pass-by-writeback也适用于__weak变量。</li>
+</ol>
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+<div id="aboutme">
+        <p>
+            <img width="100%" class="img-thumbnail" src="../../../images/xuyafei_2019-6-14.jpg"/>
+        </p>
+    <p>
+      <strong>About 挪威的森林</strong><br/>
+        I work at Beijing. I focus on tools and services for developer productivity, including build and testing.My other interests include programming language design, game development, and learning languages (the non-programming ones).
+    </p>
+</div><!-- Sidebar -->
+<section class="well well-sm">
+  <ul class="list-group list-group-flush">
+
+<!-- Sidebar/Social -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Social</span></h4>
+  <ul class="list-group" id="social">
+    <li class="list-group-item"><a href="http://twitter.com/DaanDebie"><i class="fa fa-twitter-square fa-lg"></i> twitter</a></li>
+    <li class="list-group-item"><a href="http://www.linkedin.com/in/danieldebie"><i class="fa fa-linkedin-square fa-lg"></i> linkedin</a></li>
+    <li class="list-group-item"><a href="http://github.com/DandyDev"><i class="fa fa-github-square fa-lg"></i> github</a></li>
+    <li class="list-group-item"><a href="http://stackoverflow.com/users/872397/dandydev"><i class="fa fa-stack-overflow fa-lg"></i> stackoverflow</a></li>
+  </ul>
+</li>
+<!-- End Sidebar/Social -->
+
+<!-- Sidebar/Authors -->
+<li class="list-group-item">
+  <h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Authors</span></h4>
+  <ul class="list-group" id="authors">
+    <li class="list-group-item">
+      <a href="../../../author/yafei-xu.html"><i class="fa fa-user fa-lg"></i>Yafei Xu</a>
+      (5)
+    </li>
+  </ul>
+</li>
+<!-- End Sidebar/Authors -->
+  </ul>
+</section>
+<!-- End Sidebar -->            </aside>
+        </div>
+    </div>
+</div>
+<!-- End Content Container -->
+
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2018 挪威的森林
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="../../../theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="../../../theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="../../../theme/js/respond.min.js"></script>
+
+    <script src="../../../static/js/custom.js"></script>
+
+
+
+</body>
+</html>
