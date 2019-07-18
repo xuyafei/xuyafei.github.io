@@ -158,9 +158,9 @@
 <p>很多人都觉得，答应结果应该是：The number is 5，然而，函数执行完之后，a依然是一个空指针。下面就来详细分析：</p>
 <p>首先指出，在之前的代码段中，实参a和形参pointer_a分别存储在内存的不同的位置，这是理解本文的关键之处。</p>
 <p>如下图所示，指针a和调用testPointer()函数之后形参pointer_a在内存中的位置</p>
-<p><center><img src="/Users/xuyafei/Desktop/tmp/1.png"  width="60%" height="60%"></center></p>
+<p><center><img alt="Pelican" src="/figure/autorelease1.jpg"> </center></p>
 <p>函数testPointer()执行完之后，实参a和形参pointer_a在内存的实际指向如下图所示
-<center><img src="/Users/xuyafei/Desktop/tmp/2.png"  width="60%" height="60%"></center></p>
+<center><img alt="Pelican" src="/figure/autorelease2.jpg"> </center></p>
 <p>从图中可以看到，pointer_a经过动态内存分配之后，实际指向了新的位置，而且这个新的位置存储的值为5，实参和形参指针分别指向了不同的位置，这也就不难解释上述代码段打印的结果。</p>
 <p>将函数testPointer()换一种实现方式：</p>
 <div class="highlight"><pre><span></span><span class="nv">int</span> <span class="o">*</span> <span class="nv">testPointer</span><span class="ss">(</span> <span class="nv">int</span> <span class="o">*</span><span class="nv">pointer_a</span> <span class="ss">)</span>
@@ -224,14 +224,14 @@
 
 
 <p>所以就不难得到此打印结果。如下图，可以更好的理解实例代码以及C语言的二级指针</p>
-<p><center><img src="/Users/xuyafei/Desktop/tmp/3.png"  width="60%" height="60%"></center></p>
+<p><center><img alt="Pelican" src="/figure/autorelease3.jpg"> </center></p>
 <p>如果所示，在调用testPointer()函数之后，*pointer_a初始化之前，指针的指向关系，从图中可以很明显的得到以下结论：</p>
 <div class="highlight"><pre><span></span><span class="o">*</span><span class="n">pointer_a</span> <span class="o">==</span> <span class="n">a</span>
 </pre></div>
 
 
 <p>调用初始化语句，分配内存之后：
-<center><img src="/Users/xuyafei/Desktop/tmp/4.png"  width="60%" height="60%"></center></p>
+<center><img alt="Pelican" src="/figure/autorelease4.jpg"> </center></p>
 <p>从上图可以充分理解C语言二级指针的妙用，也可以得到如下结论：</p>
 <div class="highlight"><pre><span></span><span class="o">**</span><span class="n">pointer_a</span> <span class="o">==</span> <span class="o">*</span><span class="n">a</span> <span class="o">==</span> <span class="mi">5</span>
 </pre></div>
